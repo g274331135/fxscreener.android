@@ -1,4 +1,6 @@
-﻿namespace fxscreener.android.Models;
+﻿using fxscreener.android.Services; // Для BarData
+
+namespace fxscreener.android.Models;
 
 /// <summary>
 /// Модель свечи (бара) с методами для анализа

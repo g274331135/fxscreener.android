@@ -23,10 +23,9 @@ public class TimeAggregationService : ITimeAggregationService
         if (barsData == null || barsData.Count == 0)
             return new List<Bar>();
 
-        return barsData
-            .Select(Bar.FromBarData)
-            .Select(b => b.WithTimeZone(targetOffsetHours))
-            .ToList();
+        return barsData.Select(data => Bar.FromBarData(data))
+               .Select(b => b.WithTimeZone(targetOffsetHours))
+               .ToList();
     }
 
     #endregion

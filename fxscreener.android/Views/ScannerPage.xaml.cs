@@ -15,6 +15,12 @@ public partial class ScannerPage : ContentPage
         Disappearing += OnDisappearing;
     }
 
+    public ScannerPage(ScannerViewModel viewModel)
+    {
+        InitializeComponent();
+        BindingContext = viewModel;
+    }
+
     private void OnAppearing(object? sender, EventArgs e)
     {
         _viewModel = BindingContext as ScannerViewModel;

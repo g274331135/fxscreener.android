@@ -1,4 +1,5 @@
-﻿using fxscreener.android.Views;
+﻿using fxscreener.android.Services;
+using fxscreener.android.Views;
 
 namespace fxscreener.android;
 
@@ -10,10 +11,6 @@ public partial class App : Application
     {
         InitializeComponent();
         _serviceProvider = serviceProvider;
-
-        // Подписываемся на события жизненного цикла
-        Current!.Sleep += OnSleep;
-        Current!.Resume += OnResume;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)
@@ -28,43 +25,62 @@ public partial class App : Application
         });
     }
 
-    private void OnSleep(object? sender, AppLifecycleState e)
-    {
-        // Приложение свернули - можно освободить некоторые ресурсы
-        System.Diagnostics.Debug.WriteLine("App sleeping");
-    }
+    // В .NET MAUI жизненный цикл обрабатывается через Window, а не через Application
+    // Поэтому эти методы не нужны или реализуются иначе
 
-    private void OnResume(object? sender, AppLifecycleState e)
+    // Если нужно обрабатывать свёртывание/разворачивание, делаем так:
+    protected override void OnStart()
     {
-        // Приложение развернули - проверяем соединение
-        System.Diagnostics.Debug.WriteLine("App resuming");
+        // Приложение запускается
+        System.Diagnostics.Debug.WriteLine("App starting");
 
-        // Здесь можно вызвать проверку подключения через сервис
+        // Проверяем подключение при старте
         MainThread.BeginInvokeOnMainThread(async () =>
         {
-            var apiService = _serviceProvider.GetService<IMt5ApiService>();
-            if (apiService != null && apiService.IsConnected)
+            try
             {
-                await apiService.CheckConnectAsync();
+                var apiService = _serviceProvider.GetService<IMt5ApiService>();
+                var settings = await Models.ApiSettings.LoadAsync();
+
+                if (settings != null && apiService != null)
+                {
+                    await apiService.ConnectAsync(settings);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Auto-connect error: {ex.Message}");
             }
         });
     }
 
-    protected override void OnStart()
+    protected override void OnSleep()
     {
-        // При запуске - загружаем настройки
-        System.Diagnostics.Debug.WriteLine("App starting");
+        // Приложение свёрнуто
+        System.Diagnostics.Debug.WriteLine("App sleeping");
     }
 
-    protected override void OnStop()
+    protected override void OnResume()
     {
-        // При полном закрытии - отключаемся от API
-        System.Diagnostics.Debug.WriteLine("App stopping");
+        // Приложение развёрнуто
+        System.Diagnostics.Debug.WriteLine("App resuming");
 
-        var apiService = _serviceProvider.GetService<IMt5ApiService>();
-        if (apiService != null)
+        MainThread.BeginInvokeOnMainThread(async () =>
         {
-            Task.Run(async () => await apiService.DisconnectAsync());
-        }
+            try
+            {
+                var apiService = _serviceProvider.GetService<IMt5ApiService>();
+                if (apiService != null && apiService.IsConnected)
+                {
+                    await apiService.CheckConnectAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Resume check error: {ex.Message}");
+            }
+        });
     }
+
+    // OnStop не нужен - используем OnSleep
 }

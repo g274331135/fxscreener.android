@@ -62,6 +62,21 @@ public class ScannerViewModel : BindableObject
         }
     }
 
+    private ObservableCollection<DisplayRow> _displayRows = new();
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public ObservableCollection<DisplayRow> DisplayRows
+    {
+        get => _displayRows;
+        set
+        {
+            _displayRows = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool IsLoading
     {
         get => _isLoading;
@@ -209,6 +224,48 @@ public class ScannerViewModel : BindableObject
                     }
                 }
             }
+
+            // После получения allResults, преобразуем в DisplayRows
+            var displayRows = new ObservableCollection<DisplayRow>();
+            foreach (var result in allResults.OrderBy(r => r.Name))
+            {
+                // Первая строка
+                displayRows.Add(new DisplayRow
+                {
+                    Name = result.Name,
+                    Period = result.Period,
+                    C5 = result.C5,
+                    F2 = result.F2,
+                    Col1 = result.W5_20,
+                    Col2 = result.U_W5d ? "+" : "",
+                    Col3 = result.W5_80,
+                    Col4 = result.D_W5u ? "+" : "",
+                    IsFirstRow = true,
+                    IsSecondRow = false
+                });
+
+                // Вторая строка
+                displayRows.Add(new DisplayRow
+                {
+                    Name = null, // пусто
+                    Period = null,
+                    C5 = null,
+                    F2 = null,
+                    Col1 = result.W21_20,
+                    Col2 = result.U_W21d ? "+" : "",
+                    Col3 = result.W21_80,
+                    Col4 = result.D_W21u ? "+" : "",
+                    IsFirstRow = false,
+                    IsSecondRow = true
+                });
+            }
+
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                DisplayRows.Clear();
+                foreach (var row in displayRows)
+                    DisplayRows.Add(row);
+            });
 
             // Обновляем грид
             MainThread.BeginInvokeOnMainThread(() =>

@@ -23,15 +23,17 @@ public static class MauiProgram
         builder.Services.AddSingleton<IIndicatorCalculator, IndicatorCalculator>();
         builder.Services.AddSingleton<ITimeAggregationService, TimeAggregationService>();
 
-        // Регистрация ViewModels (Transient - новый экземпляр на каждый запрос)
+        // Регистрация ViewModels
         builder.Services.AddTransient<ScannerViewModel>();
-        builder.Services.AddTransient<SettingsViewModel>();
-        builder.Services.AddTransient<InstrumentsViewModel>();
+        // Временно комментируем, пока не создали эти ViewModels
+        // builder.Services.AddTransient<SettingsViewModel>();
+        // builder.Services.AddTransient<InstrumentsViewModel>();
 
-        // Регистрация Views (Transient)
+        // Регистрация Views
         builder.Services.AddTransient<ScannerPage>();
-        builder.Services.AddTransient<SettingsPage>();
-        builder.Services.AddTransient<InstrumentsPage>();
+        // Временно комментируем
+        // builder.Services.AddTransient<SettingsPage>();
+        // builder.Services.AddTransient<InstrumentsPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();
