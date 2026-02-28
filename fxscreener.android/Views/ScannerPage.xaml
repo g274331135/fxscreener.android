@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:fxscreener.android.ViewModels"
+             xmlns:converters="clr-namespace:fxscreener.android.Converters"
+             x:Class="fxscreener.android.Views.ScannerPage"
+             Title="FX Screener"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <ContentPage.Resources>
+        <!-- Конвертеры для отображения -->
+        <converters:BoolToPlusConverter x:Key="BoolToPlusConverter" />
+        <converters:IntToStringConverter x:Key="IntToStringConverter" />
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
+    </ContentPage.Resources>
+
+    <ContentPage.BindingContext>
+        <viewmodels:ScannerViewModel />
+    </ContentPage.BindingContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Заголовок -->
+            <RowDefinition Height="*"/>
+            <!-- Грид -->
+            <RowDefinition Height="Auto"/>
+            <!-- Статус -->
+        </Grid.RowDefinitions>
+
+        <!-- Верхняя панель -->
+        <VerticalStackLayout Grid.Row="0" Padding="10" Spacing="5">
+            <Label Text="Финансовый скринер" 
+                   FontSize="24" 
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"/>
+
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                <Button Text="Обновить" 
+                        Command="{Binding RefreshCommand}"
+                        IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}"
+                        BackgroundColor="{DynamicResource Primary}"
+                        TextColor="White"/>
+
+                <Label Text="{Binding LastUpdateTimeFormatted, StringFormat='Последнее обновление: {0}'}"
+                       VerticalOptions="Center"
+                       TextColor="Gray"/>
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- Индикатор загрузки (оверлей) -->
+        <AbsoluteLayout Grid.Row="1" 
+                        IsVisible="{Binding IsLoading}"
+                        BackgroundColor="#80000000"
+                        HorizontalOptions="Fill"
+                        VerticalOptions="Fill">
+            <ActivityIndicator IsRunning="True"
+                               AbsoluteLayout.LayoutBounds="0.5, 0.5, 100, 100"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"
+                               Color="{DynamicResource Primary}"/>
+        </AbsoluteLayout>
+
+        <!-- Грид с результатами (основной контент) -->
+        <CollectionView Grid.Row="1" 
+                        x:Name="ResultsCollection"
+                        ItemsSource="{Binding DisplayRows}"
+                        BackgroundColor="White"
+                        Margin="10">
+
+            <CollectionView.Resources>
+                <!-- Стили для ячеек -->
+                <Style x:Key="CellLabel" TargetType="Label">
+                    <Setter Property="VerticalOptions" Value="Center"/>
+                    <Setter Property="HorizontalOptions" Value="Center"/>
+                    <Setter Property="FontSize" Value="14"/>
+                </Style>
+
+                <Style x:Key="HeaderLabel" TargetType="Label" BasedOn="{StaticResource CellLabel}">
+                    <Setter Property="FontAttributes" Value="Bold"/>
+                    <Setter Property="BackgroundColor" Value="{DynamicResource Primary}"/>
+                    <Setter Property="TextColor" Value="White"/>
+                    <Setter Property="Padding" Value="8,5"/>
+                </Style>
+            </CollectionView.Resources>
+
+            <!-- Шапка таблицы (заголовки колонок) -->
+            <CollectionView.Header>
+                <Grid Padding="0,5" 
+                      ColumnSpacing="1" 
+                      RowSpacing="1"
+                      BackgroundColor="{DynamicResource Primary}">
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80"/>
+                        <!-- Name -->
+                        <ColumnDefinition Width="60"/>
+                        <!-- Period -->
+                        <ColumnDefinition Width="60"/>
+                        <!-- C5 -->
+                        <ColumnDefinition Width="60"/>
+                        <!-- F2 -->
+                        <ColumnDefinition Width="60"/>
+                        <!-- W5-20 / W21-20 -->
+                        <ColumnDefinition Width="60"/>
+                        <!-- U-W5d / U-W21d -->
+                        <ColumnDefinition Width="60"/>
+                        <!-- W5-80 / W21-80 -->
+                        <ColumnDefinition Width="60"/>
+                        <!-- D-W5u / D-W21u -->
+                    </Grid.ColumnDefinitions>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Первая строка заголовков -->
+                    <Label Grid.Row="0" Grid.Column="0" Text="Name" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="0" Grid.Column="1" Text="Period" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="0" Grid.Column="2" Text="C5" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="0" Grid.Column="3" Text="F2" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="0" Grid.Column="4" Text="W5-20" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="0" Grid.Column="5" Text="U-W5d" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="0" Grid.Column="6" Text="W5-80" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="0" Grid.Column="7" Text="D-W5u" Style="{StaticResource HeaderLabel}"/>
+
+                    <!-- Вторая строка заголовков (подписи для W21) -->
+                    <Label Grid.Row="1" Grid.Column="4" Text="W21-20" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="1" Grid.Column="5" Text="U-W21d" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="1" Grid.Column="6" Text="W21-80" Style="{StaticResource HeaderLabel}"/>
+                    <Label Grid.Row="1" Grid.Column="7" Text="D-W21u" Style="{StaticResource HeaderLabel}"/>
+
+                    <!-- Пустые ячейки во второй строке для первых 4 колонок -->
+                    <BoxView Grid.Row="1" Grid.Column="0" BackgroundColor="Transparent"/>
+                    <BoxView Grid.Row="1" Grid.Column="1" BackgroundColor="Transparent"/>
+                    <BoxView Grid.Row="1" Grid.Column="2" BackgroundColor="Transparent"/>
+                    <BoxView Grid.Row="1" Grid.Column="3" BackgroundColor="Transparent"/>
+                </Grid>
+            </CollectionView.Header>
+
+            <!-- Шаблон строки данных -->
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Padding="0,2" 
+                          ColumnSpacing="1" 
+                          RowSpacing="1"
+                          BackgroundColor="{Binding RowColor}">
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80"/>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Первая строка пары (с Name/Period) -->
+                        <Label Grid.Column="0" 
+                               Text="{Binding Name}"
+                               IsVisible="{Binding IsFirstRow}"
+                               Style="{StaticResource CellLabel}"
+                               FontAttributes="Bold"/>
+
+                        <Label Grid.Column="1" 
+                               Text="{Binding Period}"
+                               IsVisible="{Binding IsFirstRow}"
+                               Style="{StaticResource CellLabel}"/>
+
+                        <Label Grid.Column="2" 
+                               Text="{Binding C5}"
+                               IsVisible="{Binding IsFirstRow}"
+                               Style="{StaticResource CellLabel}"/>
+
+                        <Label Grid.Column="3" 
+                               Text="{Binding F2}"
+                               IsVisible="{Binding IsFirstRow}"
+                               Style="{StaticResource CellLabel}"/>
+
+                        <!-- Вторая строка пары (пустые ячейки для первых 4 колонок) -->
+                        <BoxView Grid.Column="0" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
+                        <BoxView Grid.Column="1" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
+                        <BoxView Grid.Column="2" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
+                        <BoxView Grid.Column="3" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
+
+                        <!-- Колонки 4-7 (общие для обеих строк) -->
+                        <Label Grid.Column="4" 
+                               Text="{Binding Col1, Converter={StaticResource IntToStringConverter}}"
+                               Style="{StaticResource CellLabel}"/>
+
+                        <Label Grid.Column="5" 
+                               Text="{Binding Col2}"
+                               Style="{StaticResource CellLabel}"
+                               TextColor="{Binding Col2, Converter={StaticResource BoolToPlusConverter}, ConverterParameter=color}"/>
+
+                        <Label Grid.Column="6" 
+                               Text="{Binding Col3, Converter={StaticResource IntToStringConverter}}"
+                               Style="{StaticResource CellLabel}"/>
+
+                        <Label Grid.Column="7" 
+                               Text="{Binding Col4}"
+                               Style="{StaticResource CellLabel}"
+                               TextColor="{Binding Col4, Converter={StaticResource BoolToPlusConverter}, ConverterParameter=color}"/>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Нижняя панель статуса -->
+        <Border Grid.Row="2"
+                StrokeThickness="1"
+                Stroke="{DynamicResource Primary}"
+                Padding="10"
+                Margin="10">
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="14"
+                   HorizontalOptions="Center"/>
+        </Border>
+    </Grid>
+</ContentPage>
