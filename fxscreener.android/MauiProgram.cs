@@ -1,25 +1,42 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using fxscreener.android.Services;
+using fxscreener.android.ViewModels;
+using fxscreener.android.Views;
+using Microsoft.Extensions.Logging;
 
-namespace fxscreener.android
+namespace fxscreener.android;
+
+public static class MauiProgram
 {
-    public static class MauiProgram
+    public static MauiApp CreateMauiApp()
     {
-        public static MauiApp CreateMauiApp()
-        {
-            var builder = MauiApp.CreateBuilder();
-            builder
-                .UseMauiApp<App>()
-                .ConfigureFonts(fonts =>
-                {
-                    fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                    fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-                });
+        var builder = MauiApp.CreateBuilder();
+        builder
+            .UseMauiApp<App>()
+            .ConfigureFonts(fonts =>
+            {
+                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+            });
+
+        // Регистрация сервисов (Singleton - один экземпляр на всё приложение)
+        builder.Services.AddSingleton<IMt5ApiService, Mt5ApiService>();
+        builder.Services.AddSingleton<IIndicatorCalculator, IndicatorCalculator>();
+        builder.Services.AddSingleton<ITimeAggregationService, TimeAggregationService>();
+
+        // Регистрация ViewModels (Transient - новый экземпляр на каждый запрос)
+        builder.Services.AddTransient<ScannerViewModel>();
+        builder.Services.AddTransient<SettingsViewModel>();
+        builder.Services.AddTransient<InstrumentsViewModel>();
+
+        // Регистрация Views (Transient)
+        builder.Services.AddTransient<ScannerPage>();
+        builder.Services.AddTransient<SettingsPage>();
+        builder.Services.AddTransient<InstrumentsPage>();
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+        builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
-        }
+        return builder.Build();
     }
 }

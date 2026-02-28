@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="fxscreener.android.Views.SettingsPage"
+             Title="Настройки">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Настройки подключения к MT5 API"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"/>
+
+            <Label Text="Логин:"/>
+            <Entry x:Name="LoginEntry" Placeholder="Введите логин"/>
+
+            <Label Text="Пароль:"/>
+            <Entry x:Name="PasswordEntry" 
+                   Placeholder="Введите пароль"
+                   IsPassword="True"/>
+
+            <Label Text="Хост:"/>
+            <Entry x:Name="HostEntry" 
+                   Text="mt5full2.mtapi.io"
+                   Placeholder="хост"/>
+
+            <Label Text="Порт:"/>
+            <Entry x:Name="PortEntry" 
+                   Text="443"
+                   Keyboard="Numeric"
+                   Placeholder="порт"/>
+
+            <Label Text="API Key (GUID):"/>
+            <Entry x:Name="ApiKeyEntry" 
+                   Placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+
+            <Label Text="Operation ID:"/>
+            <Entry x:Name="OperationIdEntry" Placeholder="operation id"/>
+
+            <Label Text="Часовой пояс (UTC смещение):"/>
+            <Entry x:Name="UtcOffsetEntry" 
+                   Text="3"
+                   Keyboard="Numeric"
+                   Placeholder="3 для Москвы"/>
+
+            <Button x:Name="TestConnectionButton"
+                    Text="Проверить подключение"
+                    BackgroundColor="Gray"
+                    TextColor="White"/>
+
+            <Button x:Name="SaveSettingsButton"
+                    Text="Сохранить настройки"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="White"/>
+
+            <Label x:Name="StatusLabel"
+                   Text=""
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
