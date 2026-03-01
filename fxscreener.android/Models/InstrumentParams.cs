@@ -108,29 +108,9 @@ public class InstrumentsStorage
 
     private static string GetStorageFilePath()
     {
-#if ANDROID
-        try
-        {
-            // Используем ту же папку Documents/fxscreener что и для настроек
-            var documentsPath = Android.OS.Environment.GetExternalStoragePublicDirectory(
-                Android.OS.Environment.DirectoryDocuments)!.AbsolutePath;
-
-            var appFolder = Path.Combine(documentsPath, "fxscreener");
-
-            if (!Directory.Exists(appFolder))
-                Directory.CreateDirectory(appFolder);
-
-            return Path.Combine(appFolder, StorageFileName);
-        }
-        catch
-        {
-            var fallbackPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            return Path.Combine(fallbackPath, StorageFileName);
-        }
-#else
-        var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        return Path.Combine(documentsPath, StorageFileName);
-#endif
+        // ✅ Используем AppDataDirectory - не требует разрешений
+        var appDataPath = FileSystem.AppDataDirectory;
+        return Path.Combine(appDataPath, StorageFileName);
     }
 
     /// <summary>
