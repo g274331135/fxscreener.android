@@ -34,7 +34,7 @@ public interface ITimeAggregationService
     /// </summary>
     /// <param name="currentTime">Текущее время в целевом поясе</param>
     /// <param name="timeframeMinutes">Таймфрейм</param>
-    /// <returns>true если до закрытия <= 5 минут</returns>
+    /// <returns>true если до закрытия не более 5 минут</returns>
     bool IsBuildingMode(DateTime currentTime, int timeframeMinutes);
 
     /// <summary>

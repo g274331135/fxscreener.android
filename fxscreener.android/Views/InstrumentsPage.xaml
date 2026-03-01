@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="fxscreener.android.Views.InstrumentsPage"
+             BackgroundColor="{DynamicResource PageBackgroundColor}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок -->
+        <Grid Grid.Row="0" 
+              BackgroundColor="{DynamicResource Primary}"
+              HeightRequest="50">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <ImageButton Grid.Column="0"
+                         BackgroundColor="Transparent"
+                         WidthRequest="40"
+                         HeightRequest="40"
+                         HorizontalOptions="Start"
+                         Clicked="OnBackButtonClicked">
+                <ImageButton.Source>
+                    <FontImageSource FontFamily="MaterialIcons"
+                                     Glyph="&#xe5c4;"
+                                     Color="White"
+                                     Size="24"/>
+                </ImageButton.Source>
+            </ImageButton>
+
+            <Label Grid.Column="1"
+                   Text="Управление инструментами"
+                   TextColor="White"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Start"/>
+        </Grid>
+
+        <!-- Список инструментов -->
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Instruments}"
+                        SelectionMode="None"
+                        Margin="10">
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItem Text="Удалить" 
+                                        BackgroundColor="Red"
+                                        Command="{Binding DeleteInstrumentCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                                        CommandParameter="{Binding .}"/>
+                        </SwipeView.RightItems>
+
+                        <Grid Padding="10,5"
+                              ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <Label Text="{Binding Symbol}" 
+                                       FontSize="16" 
+                                       FontAttributes="Bold"/>
+                                <Label Text="{Binding Period}" 
+                                       FontSize="12" 
+                                       TextColor="Gray"/>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="{Binding Description}" 
+                                       FontSize="12"
+                                       LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding LastUpdated, StringFormat='Обн: {0:HH:mm dd.MM'}"
+                                       FontSize="10"
+                                       TextColor="Gray"/>
+                            </VerticalStackLayout>
+
+                            <!-- Исправленный Switch -->
+                            <Switch Grid.Column="2"
+                                    IsToggled="{Binding IsActive}"
+                                    Toggled="OnSwitchToggled"/>
+                        </Grid>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Кнопки действий -->
+        <HorizontalStackLayout Grid.Row="2"
+                               Spacing="10"
+                               Padding="10"
+                               HorizontalOptions="Center">
+
+            <Button Text="➕ Добавить"
+                    Command="{Binding AddInstrumentCommand}"
+                    BackgroundColor="{DynamicResource Primary}"
+                    TextColor="White"
+                    IsEnabled="{Binding IsNotLoading}"/>
+
+            <Button Text="🔄 Обновить из API"
+                    Command="{Binding RefreshFromApiCommand}"
+                    BackgroundColor="Gray"
+                    TextColor="White"
+                    IsEnabled="{Binding IsNotLoading}"/>
+        </HorizontalStackLayout>
+
+        <!-- Индикатор загрузки -->
+        <AbsoluteLayout Grid.Row="1"
+                        Grid.RowSpan="2"
+                        IsVisible="{Binding IsLoading}"
+                        BackgroundColor="#80000000"
+                        HorizontalOptions="Fill"
+                        VerticalOptions="Fill">
+            <ActivityIndicator IsRunning="True"
+                               AbsoluteLayout.LayoutBounds="0.5, 0.5, 50, 50"
+                               AbsoluteLayout.LayoutFlags="PositionProportional"
+                               Color="{DynamicResource Primary}"/>
+        </AbsoluteLayout>
+
+        <!-- Статус -->
+        <Border Grid.Row="3"
+                StrokeThickness="1"
+                Stroke="{Binding StatusColor}"
+                Padding="8"
+                Margin="5">
+            <Label Text="{Binding StatusMessage}"
+                   TextColor="{Binding StatusColor}"
+                   FontSize="11"
+                   HorizontalOptions="Center"/>
+        </Border>
+    </Grid>
+</ContentPage>

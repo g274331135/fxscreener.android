@@ -43,7 +43,7 @@ public interface IIndicatorCalculator
     int? FindBarWhereWprAboveMinus20(List<Bar> bars, int period);
 
     /// <summary>
-    /// Найти номер бара, где WPR < -80 (не более 5 баров назад)
+    /// Найти номер бара, где WPR меньше минус80 (не более 5 баров назад)
     /// </summary>
     int? FindBarWhereWprBelowMinus80(List<Bar> bars, int period);
 
