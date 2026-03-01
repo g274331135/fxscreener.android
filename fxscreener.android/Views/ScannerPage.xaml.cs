@@ -23,17 +23,16 @@ public partial class ScannerPage : ContentPage
             "Отмена",
             null,
             "Настройки подключения",
-            "Управление инструментами");  // Новый пункт
+            "Управление инструментами");
 
         if (action == "Настройки подключения")
         {
-            var settingsPage = _serviceProvider.GetRequiredService<SettingsPage>();
-            await Navigation.PushModalAsync(settingsPage);
+            // Используем Shell для навигации
+            await Shell.Current.GoToAsync("settings");
         }
         else if (action == "Управление инструментами")
         {
-            var instrumentsPage = _serviceProvider.GetRequiredService<InstrumentsPage>();
-            await Navigation.PushModalAsync(instrumentsPage);
+            await Shell.Current.GoToAsync("instruments");
         }
     }
 }

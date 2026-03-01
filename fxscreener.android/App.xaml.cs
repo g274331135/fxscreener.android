@@ -1,6 +1,5 @@
 ﻿using fxscreener.android.Models;
 using fxscreener.android.Services;
-using fxscreener.android.Views;
 
 namespace fxscreener.android;
 
@@ -16,25 +15,30 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // Определяем, какую страницу показать при запуске
-        ContentPage startPage;
+        // Создаём Shell
+        var shell = _serviceProvider.GetRequiredService<AppShell>();
 
-        // Синхронно проверяем настройки (или асинхронно с ожиданием)
-        var settings = Task.Run(async () => await ApiSettings.LoadAsync()).GetAwaiter().GetResult();
-
-        if (settings == null || string.IsNullOrWhiteSpace(settings.ApiKey))
+        // Асинхронно проверяем настройки и устанавливаем начальную страницу
+        Task.Run(async () =>
         {
-            // Настроек нет - показываем страницу настроек
-            startPage = _serviceProvider.GetRequiredService<SettingsPage>();
-        }
-        else
-        {
-            // Настройки есть - показываем главный сканер
-            startPage = _serviceProvider.GetRequiredService<ScannerPage>();
-        }
+            var settings = await ApiSettings.LoadAsync();
 
-        // Создаём Window с обычной страницей (без NavigationPage)
-        return new Window(startPage);
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (settings == null || string.IsNullOrWhiteSpace(settings.ApiKey))
+                {
+                    // Настроек нет - показываем страницу настроек
+                    shell.GoToAsync("//settings");
+                }
+                else
+                {
+                    // Настройки есть - показываем главный сканер
+                    shell.GoToAsync("//scanner");
+                }
+            });
+        });
+
+        return new Window(shell);
     }
 
     protected override void OnStart()

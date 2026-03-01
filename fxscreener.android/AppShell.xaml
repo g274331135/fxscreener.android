@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="fxscreener.android.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:fxscreener.android"
-    Title="fxscreener.android">
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:views="clr-namespace:fxscreener.android.Views"
+       x:Class="fxscreener.android.AppShell">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <!-- Регистрируем маршруты для страниц -->
+    <ShellContent Title="Scanner" 
+                  Route="scanner" 
+                  ContentTemplate="{DataTemplate views:ScannerPage}" />
+
+    <ShellContent Title="Settings" 
+                  Route="settings" 
+                  ContentTemplate="{DataTemplate views:SettingsPage}" />
+
+    <ShellContent Title="Instruments" 
+                  Route="instruments" 
+                  ContentTemplate="{DataTemplate views:InstrumentsPage}" />
 
 </Shell>

@@ -16,22 +16,26 @@ public static class MauiProgram
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+                fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
             });
 
-        // Регистрация сервисов (Singleton - один экземпляр на всё приложение)
+        // Сервисы
         builder.Services.AddSingleton<IMt5ApiService, Mt5ApiService>();
         builder.Services.AddSingleton<IIndicatorCalculator, IndicatorCalculator>();
         builder.Services.AddSingleton<ITimeAggregationService, TimeAggregationService>();
 
-        // Регистрация ViewModels
+        // ViewModels
         builder.Services.AddTransient<ScannerViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddTransient<InstrumentsViewModel>();
 
-        // Регистрация Views
+        // Views
         builder.Services.AddTransient<ScannerPage>();
         builder.Services.AddTransient<SettingsPage>();
-         builder.Services.AddTransient<InstrumentsPage>();
+        builder.Services.AddTransient<InstrumentsPage>();
+
+        // Shell
+        builder.Services.AddSingleton<AppShell>();
 
 #if DEBUG
         builder.Logging.AddDebug();

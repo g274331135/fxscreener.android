@@ -170,6 +170,7 @@ public class SettingsViewModel : BindableObject
         }
     }
 
+    // В SettingsViewModel.cs или прямо в обработчике
     private async Task SaveAndContinueAsync()
     {
         if (!ValidateInputs()) return;
@@ -185,19 +186,8 @@ public class SettingsViewModel : BindableObject
             StatusMessage = "✅ Настройки сохранены!";
             StatusColor = Colors.Green;
 
-            // Переходим на главный экран
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-            {
-                var scannerPage = _serviceProvider.GetRequiredService<ScannerPage>();
-                await Application.Current?.MainPage?.Navigation.PushAsync(scannerPage)!;
-
-                // Удаляем страницу настроек из стека, чтобы нельзя было вернуться назад
-                var currentPage = Application.Current?.MainPage?.Navigation.NavigationStack.FirstOrDefault();
-                if (currentPage is SettingsPage)
-                {
-                    Application.Current.MainPage.Navigation.RemovePage(currentPage);
-                }
-            });
+            // Переходим на главный экран через Shell
+            await Shell.Current.GoToAsync("//scanner");
         }
         catch (Exception ex)
         {

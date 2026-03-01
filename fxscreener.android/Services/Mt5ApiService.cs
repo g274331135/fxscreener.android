@@ -32,23 +32,11 @@ public class Mt5ApiService : IMt5ApiService
         await _connectLock.WaitAsync();
         try
         {
-            var request = new ConnectRequest
-            {
-                id = settings.OperationId,
-                login = settings.Login,
-                password = settings.Password,
-                host = settings.Host,
-                port = settings.Port
-            };
+            // Устанавливаем ApiKey для этой сессии
+            _httpClient.DefaultRequestHeaders.Remove("ApiKey");
+            _httpClient.DefaultRequestHeaders.Add("ApiKey", settings.ApiKey);
 
-            var json = JsonSerializer.Serialize(request);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            // Устанавливаем api-key для этой сессии
-            _httpClient.DefaultRequestHeaders.Remove("api-key");
-            _httpClient.DefaultRequestHeaders.Add("api-key", settings.ApiKey);
-
-            var response = await _httpClient.PostAsync("api/Connect", content);
+            var response = await _httpClient.GetAsync($"Connect?login={settings.Login}&password{settings.Password}&host={settings.Host}&port={settings.Port}&id={settings.OperationId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -87,15 +75,7 @@ public class Mt5ApiService : IMt5ApiService
 
         try
         {
-            var request = new CheckConnectRequest
-            {
-                id = _currentSettings.OperationId
-            };
-
-            var json = JsonSerializer.Serialize(request);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await _httpClient.PostAsync("api/CheckConnect", content);
+            var response = await _httpClient.GetAsync($"CheckConnect?id={_currentSettings.OperationId}");
 
             _isConnected = response.IsSuccessStatusCode;
 
@@ -121,15 +101,7 @@ public class Mt5ApiService : IMt5ApiService
 
         try
         {
-            var request = new DisconnectRequest
-            {
-                id = _currentSettings.OperationId
-            };
-
-            var json = JsonSerializer.Serialize(request);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            await _httpClient.PostAsync("api/Disconnect", content);
+            await _httpClient.GetAsync($"Disconnect?id={_currentSettings.OperationId}");
 
             System.Diagnostics.Debug.WriteLine("Disconnected successfully");
         }
