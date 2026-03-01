@@ -1,34 +1,33 @@
 using fxscreener.android.ViewModels;
+using fxscreener.android.Views;
 
 namespace fxscreener.android.Views;
 
 public partial class ScannerPage : ContentPage
 {
-    private ScannerViewModel? _viewModel;
+    private readonly ScannerViewModel _viewModel;
+    private readonly IServiceProvider _serviceProvider;
 
-    public ScannerPage()
-    {
-        InitializeComponent();
-
-        // Подписываемся на появление/исчезновение страницы
-        Appearing += OnAppearing;
-        Disappearing += OnDisappearing;
-    }
-
-    public ScannerPage(ScannerViewModel viewModel)
+    public ScannerPage(ScannerViewModel viewModel, IServiceProvider serviceProvider)
     {
         InitializeComponent();
         BindingContext = viewModel;
+        _viewModel = viewModel;
+        _serviceProvider = serviceProvider;
     }
 
-    private void OnAppearing(object? sender, EventArgs e)
+    private async void OnMenuButtonClicked(object sender, EventArgs e)
     {
-        _viewModel = BindingContext as ScannerViewModel;
-    }
+        var action = await DisplayActionSheet(
+            "Меню",
+            "Отмена",
+            null,
+            "Настройки подключения");
 
-    private void OnDisappearing(object? sender, EventArgs e)
-    {
-        // Очищаем ресурсы при уходе со страницы
-        _viewModel?.Cleanup();
+        if (action == "Настройки подключения")
+        {
+            var settingsPage = _serviceProvider.GetRequiredService<SettingsPage>();
+            await Navigation.PushModalAsync(settingsPage);  // Модальное окно
+        }
     }
 }

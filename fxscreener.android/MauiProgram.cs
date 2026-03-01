@@ -25,14 +25,14 @@ public static class MauiProgram
 
         // Регистрация ViewModels
         builder.Services.AddTransient<ScannerViewModel>();
-        // Временно комментируем, пока не создали эти ViewModels
         builder.Services.AddTransient<SettingsViewModel>();
+        // Временно комментируем, пока не создали эти ViewModels
         //builder.Services.AddTransient<InstrumentsViewModel>();
 
         // Регистрация Views
         builder.Services.AddTransient<ScannerPage>();
-        // Временно комментируем
         builder.Services.AddTransient<SettingsPage>();
+        // Временно комментируем
         // builder.Services.AddTransient<InstrumentsPage>();
 
 #if DEBUG

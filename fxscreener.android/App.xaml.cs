@@ -16,37 +16,25 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // Создаём NavigationPage с правильными цветами
-        var navigationPage = new NavigationPage();
+        // Определяем, какую страницу показать при запуске
+        ContentPage startPage;
 
-        // Устанавливаем цвета для NavigationPage (не для Window)
-        navigationPage.BarBackgroundColor = Color.FromArgb("#512BD4");
-        navigationPage.BarTextColor = Colors.White;
+        // Синхронно проверяем настройки (или асинхронно с ожиданием)
+        var settings = Task.Run(async () => await ApiSettings.LoadAsync()).GetAwaiter().GetResult();
 
-        // Асинхронно проверяем настройки и устанавливаем главную страницу
-        Task.Run(async () =>
+        if (settings == null || string.IsNullOrWhiteSpace(settings.ApiKey))
         {
-            var settings = await ApiSettings.LoadAsync();
+            // Настроек нет - показываем страницу настроек
+            startPage = _serviceProvider.GetRequiredService<SettingsPage>();
+        }
+        else
+        {
+            // Настройки есть - показываем главный сканер
+            startPage = _serviceProvider.GetRequiredService<ScannerPage>();
+        }
 
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                if (settings == null || string.IsNullOrWhiteSpace(settings.ApiKey))
-                {
-                    // Настроек нет - показываем страницу настроек
-                    var settingsPage = _serviceProvider.GetRequiredService<SettingsPage>();
-                    navigationPage.PushAsync(settingsPage);
-                }
-                else
-                {
-                    // Настройки есть - показываем главный сканер
-                    var scannerPage = _serviceProvider.GetRequiredService<ScannerPage>();
-                    navigationPage.PushAsync(scannerPage);
-                }
-            });
-        });
-
-        // Window оборачивает NavigationPage
-        return new Window(navigationPage);
+        // Создаём Window с обычной страницей (без NavigationPage)
+        return new Window(startPage);
     }
 
     protected override void OnStart()
@@ -63,7 +51,6 @@ public partial class App : Application
     {
         System.Diagnostics.Debug.WriteLine("App resuming");
 
-        // При возвращении в приложение можно проверить соединение
         MainThread.BeginInvokeOnMainThread(async () =>
         {
             try
