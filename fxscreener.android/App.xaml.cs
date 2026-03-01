@@ -1,4 +1,5 @@
-﻿using fxscreener.android.Services;
+﻿using fxscreener.android.Models;
+using fxscreener.android.Services;
 using fxscreener.android.Views;
 
 namespace fxscreener.android;
@@ -15,56 +16,54 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // Получаем главную страницу через DI
-        var scannerPage = _serviceProvider.GetRequiredService<ScannerPage>();
+        // Создаём NavigationPage с правильными цветами
+        var navigationPage = new NavigationPage();
 
-        return new Window(new NavigationPage(scannerPage)
+        // Устанавливаем цвета для NavigationPage (не для Window)
+        navigationPage.BarBackgroundColor = Color.FromArgb("#512BD4");
+        navigationPage.BarTextColor = Colors.White;
+
+        // Асинхронно проверяем настройки и устанавливаем главную страницу
+        Task.Run(async () =>
         {
-            BarBackgroundColor = Color.FromArgb("#512BD4"),
-            BarTextColor = Colors.White
+            var settings = await ApiSettings.LoadAsync();
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                if (settings == null || string.IsNullOrWhiteSpace(settings.ApiKey))
+                {
+                    // Настроек нет - показываем страницу настроек
+                    var settingsPage = _serviceProvider.GetRequiredService<SettingsPage>();
+                    navigationPage.PushAsync(settingsPage);
+                }
+                else
+                {
+                    // Настройки есть - показываем главный сканер
+                    var scannerPage = _serviceProvider.GetRequiredService<ScannerPage>();
+                    navigationPage.PushAsync(scannerPage);
+                }
+            });
         });
+
+        // Window оборачивает NavigationPage
+        return new Window(navigationPage);
     }
 
-    // В .NET MAUI жизненный цикл обрабатывается через Window, а не через Application
-    // Поэтому эти методы не нужны или реализуются иначе
-
-    // Если нужно обрабатывать свёртывание/разворачивание, делаем так:
     protected override void OnStart()
     {
-        // Приложение запускается
         System.Diagnostics.Debug.WriteLine("App starting");
-
-        // Проверяем подключение при старте
-        MainThread.BeginInvokeOnMainThread(async () =>
-        {
-            try
-            {
-                var apiService = _serviceProvider.GetService<IMt5ApiService>();
-                var settings = await Models.ApiSettings.LoadAsync();
-
-                if (settings != null && apiService != null)
-                {
-                    await apiService.ConnectAsync(settings);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Auto-connect error: {ex.Message}");
-            }
-        });
     }
 
     protected override void OnSleep()
     {
-        // Приложение свёрнуто
         System.Diagnostics.Debug.WriteLine("App sleeping");
     }
 
     protected override void OnResume()
     {
-        // Приложение развёрнуто
         System.Diagnostics.Debug.WriteLine("App resuming");
 
+        // При возвращении в приложение можно проверить соединение
         MainThread.BeginInvokeOnMainThread(async () =>
         {
             try
@@ -81,6 +80,4 @@ public partial class App : Application
             }
         });
     }
-
-    // OnStop не нужен - используем OnSleep
 }

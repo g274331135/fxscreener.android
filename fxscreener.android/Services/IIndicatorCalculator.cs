@@ -48,7 +48,7 @@ public interface IIndicatorCalculator
     int? FindBarWhereWprBelowMinus80(List<Bar> bars, int period);
 
     /// <summary>
-    /// Проверить условие U-W5d / U-W21d (закрытие выше открытия И WPR < предыдущего WPR)
+    /// Проверить условие U-W5d / U-W21d (закрытие выше открытия И WPR меньше предыдущего WPR)
     /// </summary>
     bool CheckU_Wxxd(List<Bar> bars, int period);
 
