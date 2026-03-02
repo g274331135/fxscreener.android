@@ -46,22 +46,14 @@ public interface IMt5ApiService
     /// <summary>
     /// Загрузить исторические бары для нескольких инструментов одного периода
     /// </summary>
-    /// <param name="request">Запрос с символами и периодом</param>
     /// <param name="cancellationToken">Токен отмены (для прогресса)</param>
     Task<PriceHistoryManyResponse?> GetPriceHistoryManyAsync(
-        PriceHistoryManyRequest request,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Загрузить исторические бары для одного инструмента
-    /// </summary>
-    /// <param name="symbol">Тикер</param>
-    /// <param name="timeframeMinutes">Период в минутах (60 = H1, 1440 = D1)</param>
-    /// <param name="barsCount">Количество баров (макс 1000)</param>
-    Task<PriceHistoryResponse?> GetPriceHistoryAsync(
-        string symbol,
+        string operationId,
+        List<string> symbols,
+        DateTime from,
+        DateTime to,
         int timeframeMinutes,
-        int barsCount = 50);
+        CancellationToken cancellationToken = default);
 
     #endregion
 }

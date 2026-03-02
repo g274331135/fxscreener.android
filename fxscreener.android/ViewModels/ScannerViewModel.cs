@@ -20,6 +20,8 @@ public class ScannerViewModel : BindableObject
     private DateTime _lastUpdateTime;
     private int _utcOffset = 3; // По умолчанию Москва
 
+    private string _currentOperationId = string.Empty;
+
     #endregion
 
     #region Конструктор
@@ -124,6 +126,13 @@ public class ScannerViewModel : BindableObject
     {
         try
         {
+            // Загружаем настройки чтобы получить OperationId
+            var settings = await ApiSettings.LoadAsync();
+            if (settings != null)
+            {
+                _currentOperationId = settings.OperationId;
+            }
+
             var loaded = await InstrumentsStorage.LoadAsync();
             // Копируем инструменты в наше поле (но нам нужен доступ к ним)
             // Для простоты будем использовать _storage в методах обновления
@@ -304,7 +313,7 @@ public class ScannerViewModel : BindableObject
         var from = now.AddMinutes(-timeframeMinutes * 50);
 
         var response = await _apiService.GetPriceHistoryManyAsync(
-            _currentOperationId, // Нужно хранить где-то
+            _currentOperationId,
             symbols,
             from,
             now,
@@ -334,34 +343,31 @@ public class ScannerViewModel : BindableObject
     {
         var now = DateTime.UtcNow.AddHours(_utcOffset);
 
-        // Начало текущего часа (для H1) или периода
+        // Начало текущего периода
         var periodStart = _timeAggregationService.FloorToTimeframe(now, timeframeMinutes);
 
         // Запрашиваем минутные данные с начала периода до сейчас
-        var minuteResponse = await _apiService.GetPriceHistoryManyAsync(
+        var response = await _apiService.GetPriceHistoryManyAsync(
             _currentOperationId,
             symbols,
             periodStart,
             now,
             1); // Таймфрейм 1 минута
 
-        if (minuteResponse?.data == null || minuteResponse.data.Count == 0)
+        if (response?.data == null)
             return new List<Bar>();
 
-        // Для каждого символа строим текущий бар
         var resultBars = new List<Bar>();
 
-        foreach (var symbolData in minuteResponse.data)
+        foreach (var symbolData in response.data)
         {
             var minuteBars = _timeAggregationService.AggregateToTargetZone(
                 symbolData.bars, _utcOffset);
 
-            // Строим текущий незакрытый бар
+            // Строим текущий незакрытый бар из минутных данных
             var currentBar = _timeAggregationService.BuildCurrentBarFromMinutes(
                 minuteBars, timeframeMinutes, _utcOffset);
 
-            // Добавляем несколько последних закрытых баров для контекста
-            // В реальности нужно загрузить и их, но для простоты пока так
             resultBars.Add(currentBar);
         }
 

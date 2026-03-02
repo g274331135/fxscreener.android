@@ -70,7 +70,7 @@ public class TimeAggregationService : ITimeAggregationService
     /// <summary>
     /// Округлить время вниз до начала периода
     /// </summary>
-    private DateTime FloorToTimeframe(DateTime time, int timeframeMinutes)
+    public DateTime FloorToTimeframe(DateTime time, int timeframeMinutes)
     {
         long ticks = time.Ticks;
         long periodTicks = TimeSpan.FromMinutes(timeframeMinutes).Ticks;

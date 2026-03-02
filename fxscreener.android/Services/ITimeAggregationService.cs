@@ -41,4 +41,11 @@ public interface ITimeAggregationService
     /// Получить время закрытия текущего бара
     /// </summary>
     DateTime GetNextBarCloseTime(DateTime currentTime, int timeframeMinutes);
+
+    /// <summary>
+    /// Округлить время вниз до начала периода
+    /// </summary>
+    /// <param name="time">время</param>
+    /// <param name="timeframeMinutes">Таймфрейм</param>
+    DateTime FloorToTimeframe(DateTime time, int timeframeMinutes);
 }

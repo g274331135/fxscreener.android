@@ -261,7 +261,7 @@ public class Mt5ApiService : IMt5ApiService
             url += $"&symbol={Uri.EscapeDataString(symbol)}";
         }
 
-        // Добавляем даты в формате ISO 8601 (как в примере: 2024-01-01T00:00:00)
+        // Добавляем даты в формате ISO 8601
         url += $"&from={from:yyyy-MM-ddTHH:mm:ss}";
         url += $"&to={to:yyyy-MM-ddTHH:mm:ss}";
 
@@ -272,39 +272,6 @@ public class Mt5ApiService : IMt5ApiService
         {
             return await _httpClient.GetAsync(url, cancellationToken);
         }, cancellationToken);
-    }
-
-    public async Task<PriceHistoryResponse?> GetPriceHistoryAsync(
-        string symbol,
-        int timeframeMinutes,
-        int barsCount = 50)
-    {
-        // Создаём массовый запрос для одного символа
-        var manyRequest = new PriceHistoryManyRequest
-        {
-            id = _currentSettings?.OperationId ?? string.Empty,
-            symbolsPeriods = new List<SymbolPeriodRequest>
-            {
-                new()
-                {
-                    symbol = symbol,
-                    timeframe = timeframeMinutes,
-                    barsCount = barsCount
-                }
-            }
-        };
-
-        var manyResponse = await GetPriceHistoryManyAsync(manyRequest);
-
-        if (manyResponse?.data == null || manyResponse.data.Count == 0)
-            return null;
-
-        // Преобразуем в ответ для одного символа
-        return new PriceHistoryResponse
-        {
-            symbol = symbol,
-            bars = manyResponse.data[0].bars
-        };
     }
 
     #endregion
