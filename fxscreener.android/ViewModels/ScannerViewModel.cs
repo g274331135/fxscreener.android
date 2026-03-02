@@ -174,20 +174,20 @@ public class ScannerViewModel : BindableObject
 
         try
         {
-            // Загружаем актуальный список инструментов
+            // Загружаем актуальный список инструментов - теперь ВСЕ инструменты
             var storage = await InstrumentsStorage.LoadAsync();
-            var activeInstruments = storage.GetActiveInstruments();
+            var allInstruments = storage.GetAllInstruments(); // вместо GetActiveInstruments()
 
-            if (activeInstruments.Count == 0)
+            if (allInstruments.Count == 0)
             {
-                StatusMessage = "Нет активных инструментов";
+                StatusMessage = "Нет инструментов для сканирования";
                 return;
             }
 
             StatusMessage = "Обновление данных...";
 
             // Группируем по периодам для массовой загрузки
-            var groups = activeInstruments
+            var groups = allInstruments
                 .GroupBy(x => x.Period)
                 .ToList();
 
@@ -219,74 +219,65 @@ public class ScannerViewModel : BindableObject
                 }
 
                 // Для каждого символа рассчитываем индикаторы
-                foreach (var symbol in symbols)
+                // ВАЖНО: нужно сопоставить бары с символами
+                // Это упрощённая версия - в реальности нужно маппить по символам
+                if (barsForGroup != null)
                 {
-                    // Находим бары для этого символа (в реальности нужно маппить по символу)
-                    // Здесь упрощённо - в production нужно словарь
-                    var symbolBars = barsForGroup; // В реальности фильтровать по символу
-
-                    if (symbolBars != null && symbolBars.Count >= 21)
+                    // Здесь должна быть логика распределения баров по символам
+                    // Пока для примера просто создаём результат для первого символа
+                    if (symbols.Count > 0 && barsForGroup.Count >= 21)
                     {
                         var result = _indicatorCalculator.CalculateForInstrument(
-                            symbol, period, symbolBars);
+                            symbols[0], period, barsForGroup);
                         allResults.Add(result);
                     }
                 }
             }
 
-            // После получения allResults, преобразуем в DisplayRows
-            var displayRows = new ObservableCollection<DisplayRow>();
-            foreach (var result in allResults.OrderBy(r => r.Name))
-            {
-                // Первая строка
-                displayRows.Add(new DisplayRow
-                {
-                    Name = result.Name,
-                    Period = result.Period,
-                    C5 = result.C5,
-                    F2 = result.F2,
-                    Col1 = result.W5_20,
-                    Col2 = result.U_W5d ? "+" : "",
-                    Col3 = result.W5_80,
-                    Col4 = result.D_W5u ? "+" : "",
-                    IsFirstRow = true,
-                    IsSecondRow = false
-                });
-
-                // Вторая строка
-                displayRows.Add(new DisplayRow
-                {
-                    Name = null, // пусто
-                    Period = null,
-                    C5 = null,
-                    F2 = null,
-                    Col1 = result.W21_20,
-                    Col2 = result.U_W21d ? "+" : "",
-                    Col3 = result.W21_80,
-                    Col4 = result.D_W21u ? "+" : "",
-                    IsFirstRow = false,
-                    IsSecondRow = true
-                });
-            }
-
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                DisplayRows.Clear();
-                foreach (var row in displayRows)
-                    DisplayRows.Add(row);
-            });
-
             // Обновляем грид
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                ScanResults.Clear();
+                // Здесь нужно преобразовать allResults в DisplayRows
+                var displayRows = new ObservableCollection<DisplayRow>();
                 foreach (var result in allResults.OrderBy(r => r.Name))
                 {
-                    ScanResults.Add(result);
+                    // Первая строка
+                    displayRows.Add(new DisplayRow
+                    {
+                        Name = result.Name,
+                        Period = result.Period,
+                        C5 = result.C5,
+                        F2 = result.F2,
+                        Col1 = result.W5_20,
+                        Col2 = result.U_W5d ? "+" : "",
+                        Col3 = result.W5_80,
+                        Col4 = result.D_W5u ? "+" : "",
+                        IsFirstRow = true,
+                        IsSecondRow = false
+                    });
+
+                    // Вторая строка
+                    displayRows.Add(new DisplayRow
+                    {
+                        Name = null,
+                        Period = null,
+                        C5 = null,
+                        F2 = null,
+                        Col1 = result.W21_20,
+                        Col2 = result.U_W21d ? "+" : "",
+                        Col3 = result.W21_80,
+                        Col4 = result.D_W21u ? "+" : "",
+                        IsFirstRow = false,
+                        IsSecondRow = true
+                    });
                 }
 
+                DisplayRows.Clear();
+                foreach (var row in displayRows)
+                    DisplayRows.Add(row);
+
                 LastUpdateTime = DateTime.Now;
-                StatusMessage = $"Обновлено: {ScanResults.Count} инструментов";
+                StatusMessage = $"Обновлено: {allResults.Count} инструментов";
             });
         }
         catch (Exception ex)

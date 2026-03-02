@@ -10,20 +10,30 @@ public class InstrumentParams
 {
     #region Основные поля (из SymbolParams)
 
-    public string Symbol { get; set; } = string.Empty;           // EURUSD
-    public string Description { get; set; } = string.Empty;      // Euro vs US Dollar
-    public string Currency { get; set; } = string.Empty;         // USD
+    public string Symbol { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Currency { get; set; } = string.Empty;
 
-    public double TickSize { get; set; }          // Минимальный шаг цены
-    public double TickValue { get; set; }         // Стоимость тика
-    public int Digits { get; set; }                // Количество знаков после запятой
-    public double Point { get; set; }              // Размер пункта
-    public double Spread { get; set; }             // Спред в пунктах
-    public double ContractSize { get; set; }       // Размер контракта
+    public double TickSize { get; set; }
+    public double TickValue { get; set; }
+    public int Digits { get; set; }
+    public double Point { get; set; }
+    public double Spread { get; set; }
+    public double ContractSize { get; set; }
 
-    public double SwapLong { get; set; }           // Своп на длинную позицию
-    public double SwapShort { get; set; }          // Своп на короткую позицию
-    public double Swap3Day { get; set; }           // Своп за 3 дня (среда)
+    public double SwapLong { get; set; }
+    public double SwapShort { get; set; }
+    public string ThreeDaysSwap { get; set; }
+
+    /// <summary>
+    /// Для отображения в списке
+    /// </summary>
+    public string DisplayName => $"{Symbol} ({Period})";
+
+    /// <summary>
+    /// Ключ для словаря (Symbol_Period)
+    /// </summary>
+    public string Key => $"{Symbol}_{Period}";
 
     #endregion
 
@@ -33,11 +43,6 @@ public class InstrumentParams
     /// Период для сканирования (H1, H4, D1 и т.д.)
     /// </summary>
     public string Period { get; set; } = "H1";
-
-    /// <summary>
-    /// Активен ли инструмент для сканирования
-    /// </summary>
-    public bool IsActive { get; set; } = true;
 
     /// <summary>
     /// Дата последнего обновления параметров
@@ -62,32 +67,22 @@ public class InstrumentParams
     {
         return new InstrumentParams
         {
-            Symbol = response.symbol,
-            Description = response.description ?? string.Empty,
-            Currency = response.currency ?? string.Empty,
-            TickSize = response.tickSize,
-            TickValue = response.tickValue,
-            Digits = response.digits,
-            Point = response.point,
-            Spread = response.spread,
-            ContractSize = response.contractSize,
-            SwapLong = response.swapLong,
-            SwapShort = response.swapShort,
-            Swap3Day = response.swap3Day,
+            Symbol = response.Symbol,
+            Description = response.SymbolInfo?.Description ?? string.Empty,
+            Currency = response.SymbolInfo?.Currency ?? string.Empty,
+            TickSize = response.SymbolInfo?.TickSize ?? 0,
+            TickValue = response.SymbolInfo?.TickValue ?? 0,
+            Digits = response.SymbolInfo?.Digits ?? 0,
+            Point = response.SymbolInfo?.Point ?? 0,
+            Spread = response.SymbolInfo?.Spread ?? 0,
+            ContractSize = response.SymbolInfo?.ContractSize ?? 0,
+            SwapLong = response.SymbolGroup?.SwapLong ?? 0,
+            SwapShort = response.SymbolGroup?.SwapShort ?? 0,
+            ThreeDaysSwap = response.SymbolGroup?.ThreeDaysSwap,
             Period = period,
             LastUpdated = DateTime.UtcNow
         };
     }
-
-    /// <summary>
-    /// Для отображения в списке
-    /// </summary>
-    public string DisplayName => $"{Symbol} ({Period})";
-
-    /// <summary>
-    /// Ключ для словаря (Symbol_Period)
-    /// </summary>
-    public string Key => $"{Symbol}_{Period}";
 
     #endregion
 }
@@ -202,14 +197,6 @@ public class InstrumentsStorage
     public bool Remove(InstrumentParams instrument)
     {
         return Remove(instrument.Symbol, instrument.Period);
-    }
-
-    /// <summary>
-    /// Получить все активные инструменты
-    /// </summary>
-    public List<InstrumentParams> GetActiveInstruments()
-    {
-        return Instruments.Values.Where(i => i.IsActive).ToList();
     }
 
     /// <summary>

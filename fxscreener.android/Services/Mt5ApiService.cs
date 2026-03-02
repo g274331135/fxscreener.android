@@ -192,7 +192,7 @@ public class Mt5ApiService : IMt5ApiService
             var json = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true
+                //PropertyNameCaseInsensitive = true
             });
         }
         catch (HttpRequestException)

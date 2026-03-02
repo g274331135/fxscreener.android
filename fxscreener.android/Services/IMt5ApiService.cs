@@ -1,4 +1,5 @@
 ﻿using fxscreener.android.Models;
+using System.Text.Json.Serialization;
 
 namespace fxscreener.android.Services;
 
@@ -111,30 +112,74 @@ public class SymbolParamsRequest
 /// </summary>
 public class SymbolParamsResponse
 {
-    public string symbol { get; set; } = string.Empty;
-    public string description { get; set; } = string.Empty;
-    public string currency { get; set; } = string.Empty;
-    public double tickSize { get; set; }
-    public double tickValue { get; set; }
-    public int digits { get; set; }
-    public double point { get; set; }
-    public double spread { get; set; }
-    public double spreadBalance { get; set; }
-    public double contractSize { get; set; }
-    public double profitCalcMode { get; set; }
-    public double swapMode { get; set; }
-    public double swapLong { get; set; }
-    public double swapShort { get; set; }
-    public double swap3Day { get; set; }
-    public double swapRollover3Day { get; set; }
-    public double swapRollover3DayFriday { get; set; }
-    public double marginCurrency { get; set; }
-    public double marginHedge { get; set; }
-    public double marginMaintenance { get; set; }
-    public double marginInitial { get; set; }
+    [JsonPropertyName("symbol")]
+    public string Symbol { get; set; } = string.Empty;
 
-    // Торговые сессии можно добавить при необходимости
-    // public List<TradingSession> sessions { get; set; }
+    [JsonPropertyName("symbolInfo")]
+    public SymbolInfo SymbolInfo { get; set; } = new();
+
+    [JsonPropertyName("symbolGroup")]
+    public SymbolGroup SymbolGroup { get; set; } = new();
+}
+
+public class SymbolInfo
+{
+    [JsonPropertyName("currency")]
+    public string Currency { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+
+    [JsonPropertyName("digits")]
+    public int Digits { get; set; }
+
+    [JsonPropertyName("point")]
+    public double Point { get; set; }
+
+    [JsonPropertyName("spread")]
+    public double Spread { get; set; }
+
+    [JsonPropertyName("tickValue")]
+    public double TickValue { get; set; }
+
+    [JsonPropertyName("tickSize")]
+    public double TickSize { get; set; }
+
+    [JsonPropertyName("contractSize")]
+    public double ContractSize { get; set; }
+
+    [JsonPropertyName("profitCurrency")]
+    public string ProfitCurrency { get; set; } = string.Empty;
+
+    [JsonPropertyName("marginCurrency")]
+    public string MarginCurrency { get; set; } = string.Empty;
+
+    [JsonPropertyName("precision")]
+    public int Precision { get; set; }
+}
+
+public class SymbolGroup
+{
+    [JsonPropertyName("groupName")]
+    public string GroupName { get; set; } = string.Empty;
+
+    [JsonPropertyName("swapLong")]
+    public double SwapLong { get; set; }
+
+    [JsonPropertyName("swapShort")]
+    public double SwapShort { get; set; }
+
+    [JsonPropertyName("threeDaysSwap")]
+    public string ThreeDaysSwap { get; set; } = string.Empty;
+
+    [JsonPropertyName("minLots")]
+    public double MinLots { get; set; }
+
+    [JsonPropertyName("maxLots")]
+    public double MaxLots { get; set; }
+
+    [JsonPropertyName("lotsStep")]
+    public double LotsStep { get; set; }
 }
 
 /// <summary>

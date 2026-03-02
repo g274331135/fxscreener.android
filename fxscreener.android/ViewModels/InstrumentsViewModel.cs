@@ -8,6 +8,7 @@ namespace fxscreener.android.ViewModels;
 
 public class InstrumentsViewModel : BindableObject
 {
+    private string _currentOperationId = string.Empty;
     private readonly IMt5ApiService _apiService;
     private readonly IServiceProvider _serviceProvider;
     private InstrumentsStorage _storage;
@@ -111,12 +112,26 @@ public class InstrumentsViewModel : BindableObject
         LoadInstrumentsCommand = new Command(async () => await LoadInstrumentsAsync());
         AddInstrumentCommand = new Command(async () => await ShowAddDialogAsync());
         DeleteInstrumentCommand = new Command<InstrumentParams>(async (instrument) => await DeleteInstrumentAsync(instrument));
-        ToggleActiveCommand = new Command<InstrumentParams>(async (instrument) => await ToggleActiveAsync(instrument));
-        RefreshFromApiCommand = new Command(async () => await RefreshSelectedFromApiAsync());
+        RefreshFromApiCommand = new Command(async () => await RefreshAllFromApiAsync());
         BackCommand = new Command(async () => await GoBackAsync());
 
         // Загружаем при старте
         Task.Run(LoadInstrumentsAsync);
+    }
+
+    public async Task OnAppearing()
+    {
+        await LoadInstrumentsAsync();
+
+        // Проверяем подключение к API
+        if (!_apiService.IsConnected)
+        {
+            var settings = await ApiSettings.LoadAsync();
+            if (settings != null)
+            {
+                await _apiService.ConnectAsync(settings);
+            }
+        }
     }
 
     #region Загрузка
@@ -128,6 +143,13 @@ public class InstrumentsViewModel : BindableObject
 
         try
         {
+            // Загружаем настройки API для OperationId
+            var settings = await ApiSettings.LoadAsync();
+            if (settings != null)
+            {
+                _currentOperationId = settings.OperationId;
+            }
+
             _storage = await InstrumentsStorage.LoadAsync();
 
             MainThread.BeginInvokeOnMainThread(() =>
@@ -179,7 +201,7 @@ public class InstrumentsViewModel : BindableObject
         if (period == "Отмена" || period == null)
             return;
 
-        NewSymbol = symbol.ToUpper();
+        NewSymbol = symbol;
         SelectedPeriod = period;
 
         await AddInstrumentAsync();
@@ -204,7 +226,6 @@ public class InstrumentsViewModel : BindableObject
 
             // Создаём новый инструмент
             var newInstrument = InstrumentParams.FromSymbolParams(symbolParams, SelectedPeriod);
-            newInstrument.IsActive = true;
 
             // Сохраняем
             _storage.AddOrUpdate(newInstrument);
@@ -250,84 +271,103 @@ public class InstrumentsViewModel : BindableObject
 
         if (!confirm) return;
 
-        _storage.Remove(instrument);
-        await _storage.SaveAsync();
-
-        MainThread.BeginInvokeOnMainThread(() =>
+        try
         {
-            Instruments.Remove(instrument);
-        });
+            _storage.Remove(instrument);
+            await _storage.SaveAsync();
 
-        StatusMessage = $"✅ {instrument.DisplayName} удалён";
-        StatusColor = Colors.Green;
-    }
-
-    #endregion
-
-    #region Активация/деактивация
-
-    private async Task ToggleActiveAsync(InstrumentParams instrument)
-    {
-        instrument.IsActive = !instrument.IsActive;
-        _storage.AddOrUpdate(instrument);
-        await _storage.SaveAsync();
-
-        // Обновляем отображение
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            var index = Instruments.IndexOf(instrument);
-            if (index >= 0)
+            // Безопасное удаление из ObservableCollection
+            MainThread.BeginInvokeOnMainThread(() =>
             {
-                Instruments.RemoveAt(index);
-                Instruments.Insert(index, instrument);
-            }
-        });
+                // Находим инструмент в коллекции
+                var itemToRemove = Instruments.FirstOrDefault(i => i.Key == instrument.Key);
+                if (itemToRemove != null)
+                {
+                    Instruments.Remove(itemToRemove);
+                }
 
-        StatusMessage = $"{instrument.Symbol} {(instrument.IsActive ? "активирован" : "деактивирован")}";
-        StatusColor = Colors.Gray;
+                StatusMessage = $"✅ {instrument.DisplayName} удалён";
+                StatusColor = Colors.Green;
+            });
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"❌ Ошибка: {ex.Message}";
+            StatusColor = Colors.Red;
+        }
     }
 
     #endregion
 
     #region Обновление из API
 
-    private async Task RefreshSelectedFromApiAsync()
+    private async Task RefreshAllFromApiAsync()
     {
-        var selected = Instruments.Where(i => i.IsActive).ToList();
-        if (!selected.Any())
+        if (!Instruments.Any())
         {
-            StatusMessage = "Нет активных инструментов для обновления";
+            StatusMessage = "Нет инструментов для обновления";
+            StatusColor = Colors.Orange;
             return;
         }
 
         IsLoading = true;
-        StatusMessage = "Обновление параметров из API...";
+        StatusMessage = "Проверка подключения к API...";
 
         try
         {
-            foreach (var instrument in selected)
+            // Проверяем подключение
+            if (!_apiService.IsConnected)
+            {
+                var settings = await ApiSettings.LoadAsync();
+                if (settings == null)
+                {
+                    StatusMessage = "❌ Нет настроек API";
+                    StatusColor = Colors.Red;
+                    return;
+                }
+
+                var connected = await _apiService.ConnectAsync(settings);
+                if (!connected)
+                {
+                    StatusMessage = "❌ Не удалось подключиться к API";
+                    StatusColor = Colors.Red;
+                    return;
+                }
+
+                _currentOperationId = settings.OperationId;
+            }
+
+            StatusMessage = "Обновление параметров из API...";
+
+            foreach (var instrument in Instruments.ToList())
             {
                 var freshParams = await _apiService.GetSymbolParamsAsync(instrument.Symbol);
                 if (freshParams != null)
                 {
-                    // Обновляем поля, но сохраняем период и активность
-                    instrument.TickSize = freshParams.tickSize;
-                    instrument.TickValue = freshParams.tickValue;
-                    instrument.Digits = freshParams.digits;
-                    instrument.Point = freshParams.point;
-                    instrument.Spread = freshParams.spread;
-                    instrument.ContractSize = freshParams.contractSize;
-                    instrument.SwapLong = freshParams.swapLong;
-                    instrument.SwapShort = freshParams.swapShort;
-                    instrument.Swap3Day = freshParams.swap3Day;
+                    instrument.TickSize = freshParams.SymbolInfo.TickSize;
+                    instrument.TickValue = freshParams.SymbolInfo.TickValue;
+                    instrument.Digits = freshParams.SymbolInfo.Digits;
+                    instrument.Point = freshParams.SymbolInfo.Point;
+                    instrument.Spread = freshParams.SymbolInfo.Spread;
+                    instrument.ContractSize = freshParams.SymbolInfo.ContractSize;
+                    instrument.SwapLong = freshParams.SymbolGroup.SwapLong;
+                    instrument.SwapShort = freshParams.SymbolGroup.SwapShort;
+                    instrument.ThreeDaysSwap = freshParams.SymbolGroup.ThreeDaysSwap;
                     instrument.LastUpdated = DateTime.UtcNow;
 
                     _storage.AddOrUpdate(instrument);
                 }
+
+                // Небольшая задержка, чтобы не забивать API
+                await Task.Delay(100);
             }
 
             await _storage.SaveAsync();
-            StatusMessage = $"✅ Обновлено {selected.Count} инструментов";
+
+            // Обновляем список
+            await LoadInstrumentsAsync();
+
+            StatusMessage = $"✅ Обновлено {Instruments.Count} инструментов";
             StatusColor = Colors.Green;
         }
         catch (Exception ex)
@@ -351,4 +391,16 @@ public class InstrumentsViewModel : BindableObject
     }
 
     #endregion
+}
+
+public static class CommandExtensions
+{
+    public static async Task ExecuteAsync(this ICommand command, object parameter = null)
+    {
+        if (command?.CanExecute(parameter) == true)
+        {
+            command.Execute(parameter);
+        }
+        await Task.CompletedTask;
+    }
 }

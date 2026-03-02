@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:fxscreener.android.ViewModels"
              x:Class="fxscreener.android.Views.InstrumentsPage"
              BackgroundColor="{DynamicResource PageBackgroundColor}">
 
@@ -56,65 +57,50 @@
                     <SwipeView>
                         <SwipeView.RightItems>
                             <SwipeItem Text="Удалить" 
-                                        BackgroundColor="Red"
-                                        Command="{Binding DeleteInstrumentCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
-                                        CommandParameter="{Binding .}"/>
+                                       BackgroundColor="Red"
+                                       Command="{Binding DeleteInstrumentCommand, Source={RelativeSource AncestorType={x:Type viewmodels:InstrumentsViewModel}}}"
+                                       CommandParameter="{Binding .}"/>
                         </SwipeView.RightItems>
 
-                        <Grid Padding="10,5"
-                              ColumnSpacing="10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                        <!-- Простая горизонтальная верстка для отображения -->
+                        <HorizontalStackLayout Spacing="15"
+                                               Padding="10,5"
+                                               BackgroundColor="White"
+                                               Margin="0,2">
 
-                            <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                <Label Text="{Binding Symbol}" 
-                                       FontSize="16" 
-                                       FontAttributes="Bold"/>
-                                <Label Text="{Binding Period}" 
-                                       FontSize="12" 
-                                       TextColor="Gray"/>
-                            </VerticalStackLayout>
+                            <!-- Имя инструмента (жирным) -->
+                            <Label Text="{Binding Symbol}" 
+                                   FontSize="16" 
+                                   FontAttributes="Bold"
+                                   VerticalOptions="Center"
+                                   WidthRequest="80"/>
 
-                            <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                <Label Text="{Binding Description}" 
-                                       FontSize="12"
-                                       LineBreakMode="TailTruncation"/>
-                                <Label Text="{Binding LastUpdated, StringFormat='Обн: {0:HH:mm dd.MM'}"
-                                       FontSize="10"
-                                       TextColor="Gray"/>
-                            </VerticalStackLayout>
+                            <!-- Период -->
+                            <Label Text="{Binding Period}" 
+                                   FontSize="14"
+                                   VerticalOptions="Center"
+                                   WidthRequest="50"/>
 
-                            <!-- Исправленный Switch -->
-                            <Switch Grid.Column="2"
-                                    IsToggled="{Binding IsActive}"
-                                    Toggled="OnSwitchToggled"/>
-                        </Grid>
+                            <!-- Дата последнего обновления -->
+                            <Label Text="{Binding LastUpdated, StringFormat='{0:dd.MM.yyyy HH:mm}'}"
+                                   FontSize="12"
+                                   TextColor="Gray"
+                                   VerticalOptions="Center"
+                                   HorizontalOptions="EndAndExpand"/>
+                        </HorizontalStackLayout>
                     </SwipeView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <!-- Кнопки действий -->
-        <HorizontalStackLayout Grid.Row="2"
-                               Spacing="10"
-                               Padding="10"
-                               HorizontalOptions="Center">
-
-            <Button Text="➕ Добавить"
-                    Command="{Binding AddInstrumentCommand}"
-                    BackgroundColor="{DynamicResource Primary}"
-                    TextColor="White"
-                    IsEnabled="{Binding IsNotLoading}"/>
-
-            <Button Text="🔄 Обновить из API"
-                    Command="{Binding RefreshFromApiCommand}"
-                    BackgroundColor="Gray"
-                    TextColor="White"
-                    IsEnabled="{Binding IsNotLoading}"/>
-        </HorizontalStackLayout>
+        <!-- Кнопка добавления -->
+        <Button Grid.Row="2"
+                Text="➕ Добавить инструмент"
+                Command="{Binding AddInstrumentCommand}"
+                BackgroundColor="{DynamicResource Primary}"
+                TextColor="White"
+                Margin="10"
+                IsEnabled="{Binding IsNotLoading}"/>
 
         <!-- Индикатор загрузки -->
         <AbsoluteLayout Grid.Row="1"
