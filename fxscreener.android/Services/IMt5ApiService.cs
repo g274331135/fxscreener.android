@@ -151,7 +151,11 @@ public class SymbolParamsResponse
 public class PriceHistoryManyRequest
 {
     public string id { get; set; } = string.Empty;
-    public List<SymbolPeriodRequest> symbolsPeriods { get; set; } = new();
+    // Вместо списка объектов, API ожидает множественные параметры symbol
+    public List<string> symbols { get; set; } = new();
+    public DateTime? from { get; set; } // Начало периода
+    public DateTime? to { get; set; }   // Конец периода
+    public int timeFrame { get; set; }  // Таймфрейм в минутах
 }
 
 /// <summary>

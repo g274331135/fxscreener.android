@@ -298,22 +298,21 @@ public class ScannerViewModel : BindableObject
         string period,
         int timeframeMinutes)
     {
-        var request = new PriceHistoryManyRequest
-        {
-            symbolsPeriods = symbols.Select(s => new SymbolPeriodRequest
-            {
-                symbol = s,
-                timeframe = timeframeMinutes,
-                barsCount = 50
-            }).ToList()
-        };
+        var now = DateTime.UtcNow.AddHours(_utcOffset);
 
-        var response = await _apiService.GetPriceHistoryManyAsync(request);
+        // Рассчитываем from: текущее время минус 50 периодов
+        var from = now.AddMinutes(-timeframeMinutes * 50);
 
-        if (response?.data == null || response.data.Count == 0)
+        var response = await _apiService.GetPriceHistoryManyAsync(
+            _currentOperationId, // Нужно хранить где-то
+            symbols,
+            from,
+            now,
+            timeframeMinutes);
+
+        if (response?.data == null)
             return new List<Bar>();
 
-        // Агрегируем все бары (упрощённо)
         var allBars = new List<Bar>();
         foreach (var symbolData in response.data)
         {
@@ -333,25 +332,24 @@ public class ScannerViewModel : BindableObject
         string period,
         int timeframeMinutes)
     {
-        // Загружаем минутные данные (последние 60 минут)
-        var minuteRequest = new PriceHistoryManyRequest
-        {
-            symbolsPeriods = symbols.Select(s => new SymbolPeriodRequest
-            {
-                symbol = s,
-                timeframe = 1, // M1
-                barsCount = 60
-            }).ToList()
-        };
+        var now = DateTime.UtcNow.AddHours(_utcOffset);
 
-        var minuteResponse = await _apiService.GetPriceHistoryManyAsync(minuteRequest);
+        // Начало текущего часа (для H1) или периода
+        var periodStart = _timeAggregationService.FloorToTimeframe(now, timeframeMinutes);
+
+        // Запрашиваем минутные данные с начала периода до сейчас
+        var minuteResponse = await _apiService.GetPriceHistoryManyAsync(
+            _currentOperationId,
+            symbols,
+            periodStart,
+            now,
+            1); // Таймфрейм 1 минута
 
         if (minuteResponse?.data == null || minuteResponse.data.Count == 0)
             return new List<Bar>();
 
         // Для каждого символа строим текущий бар
         var resultBars = new List<Bar>();
-        var now = DateTime.UtcNow.AddHours(_utcOffset);
 
         foreach (var symbolData in minuteResponse.data)
         {

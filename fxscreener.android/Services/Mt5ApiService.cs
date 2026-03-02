@@ -230,18 +230,13 @@ public class Mt5ApiService : IMt5ApiService
 
     public async Task<SymbolParamsResponse?> GetSymbolParamsAsync(string symbol)
     {
+        // Формируем URL с параметрами для GET-запроса
+        var url = $"SymbolParams?id={_currentSettings?.OperationId}&symbol={symbol}";
+
         return await ExecuteWithConnectCheckAsync<SymbolParamsResponse>(async () =>
         {
-            var request = new SymbolParamsRequest
-            {
-                id = _currentSettings!.OperationId,
-                symbol = symbol
-            };
-
-            var json = JsonSerializer.Serialize(request);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            return await _httpClient.PostAsync("api/SymbolParams", content);
+            // Используем GET
+            return await _httpClient.GetAsync(url);
         });
     }
 
@@ -250,21 +245,32 @@ public class Mt5ApiService : IMt5ApiService
     #region Загрузка истории
 
     public async Task<PriceHistoryManyResponse?> GetPriceHistoryManyAsync(
-        PriceHistoryManyRequest request,
+        string operationId,
+        List<string> symbols,
+        DateTime from,
+        DateTime to,
+        int timeframeMinutes,
         CancellationToken cancellationToken = default)
     {
-        // Убеждаемся, что используем правильный operationId
-        if (_currentSettings != null)
+        // Формируем базовый URL
+        var url = $"PriceHistoryMany?id={operationId}";
+
+        // Добавляем все символы как отдельные параметры
+        foreach (var symbol in symbols)
         {
-            request.id = _currentSettings.OperationId;
+            url += $"&symbol={Uri.EscapeDataString(symbol)}";
         }
+
+        // Добавляем даты в формате ISO 8601 (как в примере: 2024-01-01T00:00:00)
+        url += $"&from={from:yyyy-MM-ddTHH:mm:ss}";
+        url += $"&to={to:yyyy-MM-ddTHH:mm:ss}";
+
+        // Добавляем таймфрейм
+        url += $"&timeFrame={timeframeMinutes}";
 
         return await ExecuteWithConnectCheckAsync<PriceHistoryManyResponse>(async () =>
         {
-            var json = JsonSerializer.Serialize(request);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            return await _httpClient.PostAsync("api/PriceHistoryMany", content, cancellationToken);
+            return await _httpClient.GetAsync(url, cancellationToken);
         }, cancellationToken);
     }
 
