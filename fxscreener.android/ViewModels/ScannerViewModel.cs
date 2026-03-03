@@ -310,14 +310,14 @@ public class ScannerViewModel : BindableObject
         string period,
         int timeframeMinutes)
     {
-        var now = DateTime.UtcNow.AddHours(_utcOffset);
+        var now = DateTime.UtcNow;
         var from = now.AddMinutes(-timeframeMinutes * 50);
 
         var response = await _apiService.GetPriceHistoryManyAsync(
             _currentOperationId,
             symbols,
-            from.ToUniversalTime(), // Важно: API ожидает UTC
-            now.ToUniversalTime(),
+            from,
+            now,
             timeframeMinutes);
 
         if (response == null || response.Count == 0)
@@ -326,7 +326,6 @@ public class ScannerViewModel : BindableObject
         var allBars = new List<Bar>();
         foreach (var item in response)
         {
-            // Конвертируем бары в наш формат
             foreach (var bar in item.Bars)
             {
                 allBars.Add(new Bar
@@ -353,14 +352,14 @@ public class ScannerViewModel : BindableObject
         string period,
         int timeframeMinutes)
     {
-        var now = DateTime.UtcNow.AddHours(_utcOffset);
-        var periodStart = _timeAggregationService.FloorToTimeframe(now, timeframeMinutes);
+        var now = DateTime.UtcNow;
+        var periodStart = _timeAggregationService.FloorToTimeframe(now.AddHours(_utcOffset), timeframeMinutes).ToUniversalTime();
 
         var response = await _apiService.GetPriceHistoryManyAsync(
             _currentOperationId,
             symbols,
-            periodStart.ToUniversalTime(),
-            now.ToUniversalTime(),
+            periodStart,
+            now,
             1); // M1
 
         if (response == null || response.Count == 0)

@@ -317,4 +317,18 @@ public static class BarExtensions
 
         return -100 * (highestHigh - bars[index].Close) / (highestHigh - lowestLow);
     }
+
+    public static Bar FromPriceHistoryBar(PriceHistoryBar data)
+    {
+        return new Bar
+        {
+            Time = data.Time,
+            Open = data.OpenPrice,
+            High = data.HighPrice,
+            Low = data.LowPrice,
+            Close = data.ClosePrice,
+            Volume = data.Volume,
+            Ticks = (int)data.TickVolume
+        };
+    }
 }

@@ -246,41 +246,20 @@ public class Mt5ApiService : IMt5ApiService
     #region Загрузка истории
 
     public async Task<PriceHistoryResponse?> GetPriceHistoryAsync(
-    string symbol,
-    int timeframeMinutes,
-    int barsCount = 50)
+        string symbol,
+        int timeframeMinutes,
+        int barsCount = 50)
     {
         var now = DateTime.UtcNow;
         var from = now.AddMinutes(-timeframeMinutes * barsCount);
 
-        var manyResponse = await GetPriceHistoryManyAsync(
-            _currentSettings?.OperationId ?? string.Empty,
-            new List<string> { symbol },
-            from,
-            now,
-            timeframeMinutes);
+        // Используем правильный эндпоинт для одного символа
+        var url = $"PriceHistory?id={_currentSettings?.OperationId}&symbol={Uri.EscapeDataString(symbol)}&from={from:yyyy-MM-ddTHH:mm:ss}&to={now:yyyy-MM-ddTHH:mm:ss}&timeFrame={timeframeMinutes}";
 
-        if (manyResponse == null || manyResponse.Count == 0)
-            return null;
-
-        var item = manyResponse.FirstOrDefault(x => x.Symbol == symbol);
-        if (item == null)
-            return null;
-
-        return new PriceHistoryResponse
+        return await ExecuteWithConnectCheckAsync<PriceHistoryResponse>(async () =>
         {
-            Symbol = symbol,
-            Bars = item.Bars.Select(b => new BarData
-            {
-                time = b.Time,
-                open = b.OpenPrice,
-                high = b.HighPrice,
-                low = b.LowPrice,
-                close = b.ClosePrice,
-                volume = b.Volume,
-                ticks = (int)b.TickVolume
-            }).ToList()
-        };
+            return await _httpClient.GetAsync(url);
+        });
     }
 
     public async Task<PriceHistoryManyResponse?> GetPriceHistoryManyAsync(

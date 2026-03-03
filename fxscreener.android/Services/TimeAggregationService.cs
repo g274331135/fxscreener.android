@@ -1,4 +1,4 @@
-﻿using Android.AdServices.Common;
+﻿using fxscreener.android.Services;
 using fxscreener.android.Models;
 
 namespace fxscreener.android.Services;

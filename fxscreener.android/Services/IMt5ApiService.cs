@@ -208,6 +208,13 @@ public class SymbolPeriodRequest
 /// <summary>
 /// Ответ на массовый запрос истории
 /// </summary>
+public class PriceHistoryManyResponse : List<PriceHistoryItem>
+{
+}
+
+/// <summary>
+/// История для одного символа
+/// </summary>
 public class PriceHistoryItem
 {
     [JsonPropertyName("symbol")]
@@ -217,6 +224,17 @@ public class PriceHistoryItem
     public List<PriceHistoryBar> Bars { get; set; } = new();
 }
 
+/// <summary>
+/// Ответ на запрос истории для одного инструмента
+/// </summary>
+public class PriceHistoryResponse : List<PriceHistoryBar>
+{
+    // Наследуем от List<PriceHistoryBar>
+}
+
+/// <summary>
+/// Данные одного бара (свечи)
+/// </summary>
 public class PriceHistoryBar
 {
     [JsonPropertyName("time")]
@@ -242,49 +260,6 @@ public class PriceHistoryBar
 
     [JsonPropertyName("spread")]
     public int Spread { get; set; }
-}
-
-public class PriceHistoryManyResponse : List<PriceHistoryItem>
-{
-    // Наследуем от List<PriceHistoryItem>
-}
-
-/// <summary>
-/// История для одного символа
-/// </summary>
-public class SymbolHistory
-{
-    public string symbol { get; set; } = string.Empty;
-    public List<BarData> bars { get; set; } = new();
-}
-
-/// <summary>
-/// Ответ на запрос истории для одного инструмента
-/// </summary>
-public class PriceHistoryResponse
-{
-    public string symbol { get; set; } = string.Empty;
-    public List<BarData> bars { get; set; } = new();
-}
-
-/// <summary>
-/// Данные одного бара (свечи)
-/// </summary>
-public class BarData
-{
-    public DateTime time { get; set; }
-    public double open { get; set; }
-    public double high { get; set; }
-    public double low { get; set; }
-    public double close { get; set; }
-    public long volume { get; set; }
-    public int ticks { get; set; }
-
-    // Для удобства работы в коде
-    public bool IsBullish => close > open;
-    public bool IsBearish => close < open;
-    public double Range => high - low;
-    public double Body => Math.Abs(close - open);
 }
 
 #endregion
