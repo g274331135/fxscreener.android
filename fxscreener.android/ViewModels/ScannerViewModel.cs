@@ -35,14 +35,26 @@ public class ScannerViewModel : BindableObject
         _indicatorCalculator = indicatorCalculator;
         _timeAggregationService = timeAggregationService;
 
-        // Загружаем сохранённые инструменты
-        Task.Run(async () => await LoadInstrumentsAsync());
+        // Проверяем подключение при старте
+        Task.Run(async () =>
+        {
+            if (!_apiService.IsConnected)
+            {
+                var settings = await ApiSettings.LoadAsync();
+                if (settings != null)
+                {
+                    await _apiService.ConnectAsync(settings);
+                }
+            }
 
-        // Команды
+            // Загружаем инструменты
+            await LoadInstrumentsAsync();
+
+            // Запускаем таймер обновления
+            StartUpdateTimer();
+        });
+
         RefreshCommand = new Command(async () => await ForceRefreshAsync());
-
-        // Запускаем таймер обновления
-        StartUpdateTimer();
     }
 
     #endregion
@@ -299,26 +311,35 @@ public class ScannerViewModel : BindableObject
         int timeframeMinutes)
     {
         var now = DateTime.UtcNow.AddHours(_utcOffset);
-
-        // Рассчитываем from: текущее время минус 50 периодов
         var from = now.AddMinutes(-timeframeMinutes * 50);
 
         var response = await _apiService.GetPriceHistoryManyAsync(
             _currentOperationId,
             symbols,
-            from,
-            now,
+            from.ToUniversalTime(), // Важно: API ожидает UTC
+            now.ToUniversalTime(),
             timeframeMinutes);
 
-        if (response?.data == null)
+        if (response == null || response.Count == 0)
             return new List<Bar>();
 
         var allBars = new List<Bar>();
-        foreach (var symbolData in response.data)
+        foreach (var item in response)
         {
-            var bars = _timeAggregationService.AggregateToTargetZone(
-                symbolData.bars, _utcOffset);
-            allBars.AddRange(bars);
+            // Конвертируем бары в наш формат
+            foreach (var bar in item.Bars)
+            {
+                allBars.Add(new Bar
+                {
+                    Time = bar.Time.AddHours(_utcOffset),
+                    Open = bar.OpenPrice,
+                    High = bar.HighPrice,
+                    Low = bar.LowPrice,
+                    Close = bar.ClosePrice,
+                    Volume = bar.Volume,
+                    Ticks = (int)bar.TickVolume
+                });
+            }
         }
 
         return allBars;
@@ -333,29 +354,33 @@ public class ScannerViewModel : BindableObject
         int timeframeMinutes)
     {
         var now = DateTime.UtcNow.AddHours(_utcOffset);
-
-        // Начало текущего периода
         var periodStart = _timeAggregationService.FloorToTimeframe(now, timeframeMinutes);
 
-        // Запрашиваем минутные данные с начала периода до сейчас
         var response = await _apiService.GetPriceHistoryManyAsync(
             _currentOperationId,
             symbols,
-            periodStart,
-            now,
-            1); // Таймфрейм 1 минута
+            periodStart.ToUniversalTime(),
+            now.ToUniversalTime(),
+            1); // M1
 
-        if (response?.data == null)
+        if (response == null || response.Count == 0)
             return new List<Bar>();
 
         var resultBars = new List<Bar>();
 
-        foreach (var symbolData in response.data)
+        foreach (var item in response)
         {
-            var minuteBars = _timeAggregationService.AggregateToTargetZone(
-                symbolData.bars, _utcOffset);
+            var minuteBars = item.Bars.Select(b => new Bar
+            {
+                Time = b.Time.AddHours(_utcOffset),
+                Open = b.OpenPrice,
+                High = b.HighPrice,
+                Low = b.LowPrice,
+                Close = b.ClosePrice,
+                Volume = b.Volume,
+                Ticks = (int)b.TickVolume
+            }).ToList();
 
-            // Строим текущий незакрытый бар из минутных данных
             var currentBar = _timeAggregationService.BuildCurrentBarFromMinutes(
                 minuteBars, timeframeMinutes, _utcOffset);
 

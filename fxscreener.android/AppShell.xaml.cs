@@ -7,6 +7,14 @@ public partial class AppShell : Shell
 {
     private readonly IServiceProvider _serviceProvider;
 
+    public AppShell()
+    {
+        InitializeComponent();
+    }
+
+    // Свойство для доступа к текущей странице (нужно для алертов)
+    public Page? CurrentPage => Current?.CurrentPage;
+
     public AppShell(IServiceProvider serviceProvider)
     {
         InitializeComponent();

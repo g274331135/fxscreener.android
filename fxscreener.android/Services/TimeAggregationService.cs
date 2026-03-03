@@ -1,4 +1,5 @@
-﻿using fxscreener.android.Models;
+﻿using Android.AdServices.Common;
+using fxscreener.android.Models;
 
 namespace fxscreener.android.Services;
 
@@ -23,9 +24,18 @@ public class TimeAggregationService : ITimeAggregationService
         if (barsData == null || barsData.Count == 0)
             return new List<Bar>();
 
-        return barsData.Select(data => Bar.FromBarData(data))
-               .Select(b => b.WithTimeZone(targetOffsetHours))
-               .ToList();
+        return barsData
+            .Select(data => new Bar
+            {
+                Time = data.time.AddHours(targetOffsetHours),
+                Open = data.open,
+                High = data.high,
+                Low = data.low,
+                Close = data.close,
+                Volume = data.volume,
+                Ticks = data.ticks
+            })
+            .ToList();
     }
 
     #endregion

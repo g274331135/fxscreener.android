@@ -183,15 +183,26 @@ public class SettingsViewModel : BindableObject
             var settings = CreateSettingsFromInputs();
             await settings.SaveAsync();
 
-            StatusMessage = "✅ Настройки сохранены!";
-            StatusColor = Colors.Green;
+            // Пробуем подключиться
+            var connected = await _apiService.ConnectAsync(settings);
 
-            // Переходим на главный экран через Shell
-            await Shell.Current.GoToAsync("//scanner");
+            if (connected)
+            {
+                StatusMessage = "✅ Подключение успешно!";
+                StatusColor = Colors.Green;
+
+                // Переходим на главный экран
+                await Shell.Current.GoToAsync("//scanner");
+            }
+            else
+            {
+                StatusMessage = "❌ Не удалось подключиться к API";
+                StatusColor = Colors.Red;
+            }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"❌ Ошибка сохранения: {ex.Message}";
+            StatusMessage = $"❌ Ошибка: {ex.Message}";
             StatusColor = Colors.Red;
         }
         finally

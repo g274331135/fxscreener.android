@@ -208,9 +208,45 @@ public class SymbolPeriodRequest
 /// <summary>
 /// Ответ на массовый запрос истории
 /// </summary>
-public class PriceHistoryManyResponse
+public class PriceHistoryItem
 {
-    public List<SymbolHistory> data { get; set; } = new();
+    [JsonPropertyName("symbol")]
+    public string Symbol { get; set; } = string.Empty;
+
+    [JsonPropertyName("bars")]
+    public List<PriceHistoryBar> Bars { get; set; } = new();
+}
+
+public class PriceHistoryBar
+{
+    [JsonPropertyName("time")]
+    public DateTime Time { get; set; }
+
+    [JsonPropertyName("openPrice")]
+    public double OpenPrice { get; set; }
+
+    [JsonPropertyName("highPrice")]
+    public double HighPrice { get; set; }
+
+    [JsonPropertyName("lowPrice")]
+    public double LowPrice { get; set; }
+
+    [JsonPropertyName("closePrice")]
+    public double ClosePrice { get; set; }
+
+    [JsonPropertyName("tickVolume")]
+    public long TickVolume { get; set; }
+
+    [JsonPropertyName("volume")]
+    public long Volume { get; set; }
+
+    [JsonPropertyName("spread")]
+    public int Spread { get; set; }
+}
+
+public class PriceHistoryManyResponse : List<PriceHistoryItem>
+{
+    // Наследуем от List<PriceHistoryItem>
 }
 
 /// <summary>
