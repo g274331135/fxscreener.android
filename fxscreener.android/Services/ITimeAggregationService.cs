@@ -18,7 +18,7 @@ public interface ITimeAggregationService
     /// <summary>
     /// Привести список баров к целевому часовому поясу (из BarData)
     /// </summary>
-    List<Bar> AggregateToTargetZone(List<BarData> barsData, int targetOffsetHours);
+    List<Bar> AggregateToTargetZone(List<PriceHistoryBar> barsData, int targetOffsetHours);
 
     /// <summary>
     /// Построить текущий (незакрытый) бар из минутных данных

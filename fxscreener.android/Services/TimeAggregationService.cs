@@ -19,7 +19,7 @@ public class TimeAggregationService : ITimeAggregationService
         return bars.Select(b => b.WithTimeZone(targetOffsetHours)).ToList();
     }
 
-    public List<Bar> AggregateToTargetZone(List<BarData> barsData, int targetOffsetHours)
+    public List<Bar> AggregateToTargetZone(List<PriceHistoryBar> barsData, int targetOffsetHours)
     {
         if (barsData == null || barsData.Count == 0)
             return new List<Bar>();
@@ -27,13 +27,13 @@ public class TimeAggregationService : ITimeAggregationService
         return barsData
             .Select(data => new Bar
             {
-                Time = data.time.AddHours(targetOffsetHours),
-                Open = data.open,
-                High = data.high,
-                Low = data.low,
-                Close = data.close,
-                Volume = data.volume,
-                Ticks = data.ticks
+                Time = data.Time.AddHours(targetOffsetHours),
+                Open = data.OpenPrice,
+                High = data.HighPrice,
+                Low = data.LowPrice,
+                Close = data.ClosePrice,
+                Volume = data.Volume,
+                Ticks = (int)data.TickVolume
             })
             .ToList();
     }

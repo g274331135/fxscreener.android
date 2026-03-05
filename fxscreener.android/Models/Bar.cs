@@ -1,4 +1,4 @@
-﻿using fxscreener.android.Services; // Для BarData
+﻿using fxscreener.android.Services;
 
 namespace fxscreener.android.Models;
 
@@ -102,17 +102,17 @@ public class Bar
     /// <summary>
     /// Создать бар из данных API
     /// </summary>
-    public static Bar FromBarData(BarData data)
+    public static Bar FromPriceHistoryBar(PriceHistoryBar data)
     {
         return new Bar
         {
-            Time = data.time,
-            Open = data.open,
-            High = data.high,
-            Low = data.low,
-            Close = data.close,
-            Volume = data.volume,
-            Ticks = data.ticks
+            Time = data.Time,
+            Open = data.OpenPrice,
+            High = data.HighPrice,
+            Low = data.LowPrice,
+            Close = data.ClosePrice,
+            Volume = data.Volume,
+            Ticks = (int)data.TickVolume
         };
     }
 

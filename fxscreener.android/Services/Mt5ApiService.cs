@@ -1,5 +1,4 @@
-﻿using Android.AdServices.Common;
-using fxscreener.android.Models;
+﻿using fxscreener.android.Models;
 using System.Text;
 using System.Text.Json;
 
