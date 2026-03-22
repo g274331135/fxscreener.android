@@ -29,6 +29,8 @@ public interface IIndicatorCalculator
     /// </summary>
     string GetF2Value(List<Bar> bars);
 
+    UdSignal? GetUdSignal(List<Bar> bars, int period);
+
     /// <summary>
     /// Получить сигнал WPR для указанного периода
     /// </summary>

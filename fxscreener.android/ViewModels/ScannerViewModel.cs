@@ -394,9 +394,12 @@ public class ScannerViewModel : BindableObject
             {
                 var pairColor = (toolIndex % 2 == 0) ? "White" : "#F8F8F8";
 
-                // W5e
+                // --- Первая строка (W5e и UD5) ---
                 var w5eColor = GetWprColor(result.W5e);
                 var w5eText = result.W5e?.BarNumber.ToString() ?? "";
+
+                var ud5Color = GetUdColor(result.UD5);
+                var ud5Display = GetUdDisplay(result.UD5);
 
                 displayRows.Add(new DisplayRow
                 {
@@ -404,17 +407,27 @@ public class ScannerViewModel : BindableObject
                     Period = result.Period,
                     C5 = result.C5,
                     F2 = result.F2,
+
+                    // W5e
                     WprDisplay = w5eText,
-                    WprColor = w5eColor.Item1,
-                    WprTextColor = w5eColor.Item2,
+                    WprBackgroundColor = w5eColor.Background,
+                    WprTextColor = w5eColor.Text,
+
+                    // UD5
+                    UdBackgroundColor = ud5Color,
+                    UdDisplay = ud5Display,
+
                     IsFirstRow = true,
                     IsSecondRow = false,
                     PairColor = pairColor
                 });
 
-                // W21e
+                // --- Вторая строка (W21e и UD21) ---
                 var w21eColor = GetWprColor(result.W21e);
                 var w21eText = result.W21e?.BarNumber.ToString() ?? "";
+
+                var ud21Color = GetUdColor(result.UD21);
+                var ud21Display = GetUdDisplay(result.UD21);
 
                 displayRows.Add(new DisplayRow
                 {
@@ -422,9 +435,16 @@ public class ScannerViewModel : BindableObject
                     Period = null,
                     C5 = null,
                     F2 = null,
+
+                    // W21e
                     WprDisplay = w21eText,
-                    WprColor = w21eColor.Item1,
-                    WprTextColor = w21eColor.Item2,
+                    WprBackgroundColor = w21eColor.Background,
+                    WprTextColor = w21eColor.Text,
+
+                    // UD21
+                    UdBackgroundColor = ud21Color,
+                    UdDisplay = ud21Display,
+
                     IsFirstRow = false,
                     IsSecondRow = true,
                     PairColor = pairColor
@@ -440,6 +460,36 @@ public class ScannerViewModel : BindableObject
             LastUpdateTime = DateTime.Now;
             StatusMessage = $"Обновлено: {allResults.Count} инструментов";
         });
+    }
+
+    /// <summary>
+    /// Возвращает цвет для UD сигнала
+    /// </summary>
+    private Color? GetUdColor(UdSignal? signal)
+    {
+        if (signal == null) return null;
+
+        return signal.SignalType switch
+        {
+            UdSignalType.Bullish => Color.FromArgb("#CCFFCC"),  // светло-зелёный
+            UdSignalType.Bearish => Color.FromArgb("#FFCCCC"),  // светло-красный
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Возвращает отображаемый символ для UD сигнала
+    /// </summary>
+    private string GetUdDisplay(UdSignal? signal)
+    {
+        if (signal == null) return "";
+
+        return signal.SignalType switch
+        {
+            UdSignalType.Bullish => "▲",   // зелёный треугольник вверх
+            UdSignalType.Bearish => "▼",   // красный треугольник вниз
+            _ => ""
+        };
     }
 
     /// <summary>

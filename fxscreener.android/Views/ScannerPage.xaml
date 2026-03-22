@@ -119,6 +119,8 @@
                             <!-- F2 -->
                             <ColumnDefinition Width="55"/>
                             <!-- W5e / W21e -->
+                            <ColumnDefinition Width="45"/>
+                            <!-- UD5 / UD21 -->
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -131,9 +133,11 @@
                         <Label Grid.Row="0" Grid.Column="2" Text="C5" Style="{StaticResource GridHeaderLabel}"/>
                         <Label Grid.Row="0" Grid.Column="3" Text="F2" Style="{StaticResource GridHeaderLabel}"/>
                         <Label Grid.Row="0" Grid.Column="4" Text="W5e" Style="{StaticResource GridHeaderLabel}"/>
+                        <Label Grid.Row="0" Grid.Column="5" Text="UD5" Style="{StaticResource GridHeaderLabel}"/>
 
                         <!-- Вторая строка заголовков -->
                         <Label Grid.Row="1" Grid.Column="4" Text="W21e" Style="{StaticResource GridHeaderLabel}"/>
+                        <Label Grid.Row="1" Grid.Column="5" Text="UD21" Style="{StaticResource GridHeaderLabel}"/>
 
                         <!-- Пустые ячейки во второй строке -->
                         <BoxView Grid.Row="1" Grid.Column="0" BackgroundColor="Transparent"/>
@@ -184,18 +188,32 @@
                             <BoxView Grid.Column="2" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
                             <BoxView Grid.Column="3" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
 
-                            <!-- Ячейка WPR с цветом -->
+                            <!-- W5e/W21e ячейка -->
                             <Frame Grid.Column="4"
                                    Padding="4,2"
                                    CornerRadius="4"
                                    HasShadow="False"
-                                   BackgroundColor="{Binding WprColor}"
+                                   BackgroundColor="{Binding WprBackgroundColor}"
                                    HorizontalOptions="Fill"
                                    VerticalOptions="Fill">
                                 <Label Text="{Binding WprDisplay}"
                                        Style="{StaticResource GridCellLabel}"
                                        TextColor="{Binding WprTextColor}"
                                        FontAttributes="Bold"/>
+                            </Frame>
+
+                            <!-- UD5/UD21 ячейка -->
+                            <Frame Grid.Column="5"
+                                   Padding="4,2"
+                                   CornerRadius="4"
+                                   HasShadow="False"
+                                   BackgroundColor="{Binding UdBackgroundColor}"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill">
+                                <Label Text="{Binding UdDisplay}"
+                                       Style="{StaticResource GridCellLabel}"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"/>
                             </Frame>
                         </Grid>
                     </DataTemplate>

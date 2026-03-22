@@ -14,12 +14,23 @@ public class InstrumentScanResult
 
     #endregion
 
-    #region Новые поля W5e и W21e
-
     public WprSignal? W5e { get; set; }   // Сигнал для WPR(5)
     public WprSignal? W21e { get; set; }  // Сигнал для WPR(21)
 
-    #endregion
+    public UdSignal? UD5 { get; set; }   // Сигнал для UD5
+    public UdSignal? UD21 { get; set; }  // Сигнал для UD21
+}
+
+public class UdSignal
+{
+    public UdSignalType SignalType { get; set; }
+}
+
+public enum UdSignalType
+{
+    None,           // Нет сигнала
+    Bullish,        // Бычий разворот (светло-зелёный)
+    Bearish         // Медвежий разворот (светло-красный)
 }
 
 /// <summary>

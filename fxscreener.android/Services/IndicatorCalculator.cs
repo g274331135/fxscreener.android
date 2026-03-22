@@ -26,7 +26,11 @@ public class IndicatorCalculator : IIndicatorCalculator
 
             // W5e и W21e
             W5e = GetWprSignal(bars, 5),
-            W21e = GetWprSignal(bars, 21)
+            W21e = GetWprSignal(bars, 21),
+
+            // UD5 и UD21
+            UD5 = GetUdSignal(bars, 5),
+            UD21 = GetUdSignal(bars, 21)
         };
 
         return result;
@@ -89,6 +93,34 @@ public class IndicatorCalculator : IIndicatorCalculator
     }
 
     #endregion
+
+    public UdSignal? GetUdSignal(List<Bar> bars, int period)
+    {
+        if (bars.Count < 2) return null;
+
+        var currentWpr = CalculateWPR(bars, 0, period);
+        var prevWpr = CalculateWPR(bars, 1, period);
+
+        // Бычий сигнал (светло-зелёный)
+        // Условия: WPR(5) на текущем баре МЕНЬШЕ предыдущего 
+        //          И WPR(5) на предыдущем баре был ВЫШЕ -20
+        //          И закрытие текущего бара ВЫШЕ открытия
+        if (currentWpr < prevWpr && prevWpr > -20 && bars[0].IsBullish)
+        {
+            return new UdSignal { SignalType = UdSignalType.Bullish };
+        }
+
+        // Медвежий сигнал (светло-красный)
+        // Условия: WPR(5) на текущем баре БОЛЬШЕ предыдущего
+        //          И WPR(5) на предыдущем баре был НИЖЕ -80
+        //          И закрытие текущего бара НИЖЕ открытия
+        if (currentWpr > prevWpr && prevWpr < -80 && bars[0].IsBearish)
+        {
+            return new UdSignal { SignalType = UdSignalType.Bearish };
+        }
+
+        return null;
+    }
 
     #region Фракталы (F2)
 
