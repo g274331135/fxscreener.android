@@ -186,7 +186,7 @@ public class ScannerViewModel : BindableObject
 
         try
         {
-            // 1. Загружаем актуальный список инструментов
+            // Загружаем актуальный список инструментов
             var storage = await InstrumentsStorage.LoadAsync();
             var allInstruments = storage.GetAllInstruments();
 
@@ -199,26 +199,25 @@ public class ScannerViewModel : BindableObject
 
             StatusMessage = "Обновление данных...";
 
-            // 2. Группируем по периодам для массовой загрузки
+            // Группируем по периодам
             var groups = allInstruments
                 .GroupBy(x => x.Period)
                 .ToList();
 
             var allResults = new List<InstrumentScanResult>();
-            var nowUtc = DateTime.UtcNow; // Для запросов к API всегда UTC
-            var nowLocal = nowUtc.AddHours(_utcOffset); // Для логики времени
+            var nowUtc = DateTime.UtcNow;
+            var nowLocal = nowUtc.AddHours(_utcOffset);
 
             foreach (var group in groups)
             {
                 var period = group.Key;
-                var instrumentsInGroup = group.ToList(); // Все инструменты этой группы
+                var instrumentsInGroup = group.ToList();
                 var symbols = instrumentsInGroup.Select(x => x.Symbol).ToList();
                 var timeframeMinutes = Mt5ApiService.ConvertPeriodToMinutes(period);
 
-                // 3. Определяем режим (достройка или обычный)
+                // Определяем режим
                 var isBuilding = _timeAggregationService.IsBuildingMode(nowLocal, timeframeMinutes);
 
-                // 4. Загружаем данные для ВСЕХ символов группы
                 List<PriceHistoryItem>? historyItems = null;
 
                 try
@@ -226,30 +225,14 @@ public class ScannerViewModel : BindableObject
                     if (isBuilding)
                     {
                         StatusMessage = $"Достройка {period}...";
-                        var periodStart = _timeAggregationService.FloorToTimeframe(nowLocal, timeframeMinutes).ToUniversalTime();
-
-                        var response = await _apiService.GetPriceHistoryManyAsync(
-                            _currentOperationId,
-                            symbols,
-                            periodStart,
-                            nowUtc,
-                            1); // Минутные данные
-
-                        historyItems = response?.ToList();
+                        // Используем метод GetBuildingBarsAsync (который теперь будет возвращать сырые данные)
+                        historyItems = await GetBuildingHistoryAsync(symbols, timeframeMinutes);
                     }
                     else
                     {
                         StatusMessage = $"Загрузка {period}...";
-                        var from = nowUtc.AddMinutes(-timeframeMinutes * 50); // Последние 50 баров
-
-                        var response = await _apiService.GetPriceHistoryManyAsync(
-                            _currentOperationId,
-                            symbols,
-                            from,
-                            nowUtc,
-                            timeframeMinutes);
-
-                        historyItems = response?.ToList();
+                        // Используем метод GetHistoricalBarsAsync (который теперь будет возвращать сырые данные)
+                        historyItems = await GetHistoricalHistoryAsync(symbols, timeframeMinutes);
                     }
                 }
                 catch (Exception ex)
@@ -259,24 +242,16 @@ public class ScannerViewModel : BindableObject
                 }
 
                 if (historyItems == null || historyItems.Count == 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"No data received for {period}");
                     continue;
-                }
 
-                // 5. Для КАЖДОГО инструмента в группе находим его бары и рассчитываем индикаторы
+                // Обрабатываем каждый инструмент
                 foreach (var instrument in instrumentsInGroup)
                 {
-                    // Находим элемент истории, соответствующий символу
                     var itemForSymbol = historyItems.FirstOrDefault(h => h.Symbol == instrument.Symbol);
-
                     if (itemForSymbol?.Bars == null || itemForSymbol.Bars.Count < 21)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Not enough bars for {instrument.Symbol} ({itemForSymbol?.Bars.Count ?? 0})");
                         continue;
-                    }
 
-                    // Конвертируем бары API в наш формат Bar и корректируем время
+                    // Конвертируем бары
                     var bars = itemForSymbol.Bars.Select(b => new Bar
                     {
                         Time = b.Time.AddHours(_utcOffset),
@@ -288,73 +263,14 @@ public class ScannerViewModel : BindableObject
                         Ticks = (int)b.TickVolume
                     }).ToList();
 
-                    // Рассчитываем индикаторы
                     var result = _indicatorCalculator.CalculateForInstrument(
-                        instrument.Symbol,
-                        period,
-                        bars);
-
+                        instrument.Symbol, period, bars);
                     allResults.Add(result);
                 }
             }
 
-            // 6. Преобразуем результаты в DisplayRows (две строки на инструмент)
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                var displayRows = new ObservableCollection<DisplayRow>();
-                var toolIndex = 0; // Счётчик инструментов для чередования цветов
-
-                foreach (var result in allResults.OrderBy(r => r.Name))
-                {
-                    // Определяем цвет пары: чётный индекс — белый, нечётный — светло-серый
-                    var pairColor = (toolIndex % 2 == 0) ? "White" : "#F8F8F8";
-
-                    // --- Первая строка (W5e) ---
-                    var w5eColor = GetWprColor(result.W5e);
-                    var w5eText = result.W5e?.BarNumber.ToString() ?? "";
-
-                    displayRows.Add(new DisplayRow
-                    {
-                        Name = result.Name,
-                        Period = result.Period,
-                        C5 = result.C5,
-                        F2 = result.F2,
-                        WprDisplay = w5eText,
-                        WprColor = w5eColor.Item1,
-                        WprTextColor = w5eColor.Item2,
-                        IsFirstRow = true,
-                        IsSecondRow = false,
-                        PairColor = pairColor
-                    });
-
-                    // --- Вторая строка (W21e) ---
-                    var w21eColor = GetWprColor(result.W21e);
-                    var w21eText = result.W21e?.BarNumber.ToString() ?? "";
-
-                    displayRows.Add(new DisplayRow
-                    {
-                        Name = null,
-                        Period = null,
-                        C5 = null,
-                        F2 = null,
-                        WprDisplay = w21eText,
-                        WprColor = w21eColor.Item1,
-                        WprTextColor = w21eColor.Item2,
-                        IsFirstRow = false,
-                        IsSecondRow = true,
-                        PairColor = pairColor
-                    });
-
-                    toolIndex++; // Переходим к следующему инструменту
-                }
-
-                DisplayRows.Clear();
-                foreach (var row in displayRows)
-                    DisplayRows.Add(row);
-
-                LastUpdateTime = DateTime.Now;
-                StatusMessage = $"Обновлено: {allResults.Count} инструментов";
-            });
+            // Формируем DisplayRows...
+            BuildDisplayRows(allResults);
         }
         catch (Exception ex)
         {
@@ -367,7 +283,9 @@ public class ScannerViewModel : BindableObject
         }
     }
 
-    // Вспомогательный метод для определения цветов
+    /// <summary>
+    /// Возвращает цвета для WPR сигнала
+    /// </summary>
     private (Color? Background, Color? Text) GetWprColor(WprSignal? signal)
     {
         if (signal == null)
@@ -376,39 +294,32 @@ public class ScannerViewModel : BindableObject
         switch (signal.SignalType)
         {
             case WprSignalType.AboveMinus20:
-                return (Color.FromArgb("#FFCCCC"), Color.FromArgb("#990000")); // бледно-красный
+                return (Color.FromArgb("#FFCCCC"), Color.FromArgb("#990000"));
             case WprSignalType.StrongAboveMinus5:
-                return (Color.FromArgb("#FF6666"), Color.FromArgb("#CC0000")); // красный
+                return (Color.FromArgb("#FF6666"), Color.FromArgb("#CC0000"));
             case WprSignalType.BelowMinus80:
-                return (Color.FromArgb("#CCFFCC"), Color.FromArgb("#006600")); // бледно-зелёный
+                return (Color.FromArgb("#CCFFCC"), Color.FromArgb("#006600"));
             case WprSignalType.StrongBelowMinus95:
-                return (Color.FromArgb("#66CC66"), Color.FromArgb("#003300")); // зелёный
+                return (Color.FromArgb("#66CC66"), Color.FromArgb("#003300"));
             default:
                 return (null, null);
         }
     }
 
     /// <summary>
-    /// Получить бары для обычного режима
+    /// Загружает исторические данные (обычный режим) с запасом на выходные
     /// </summary>
-    private async Task<List<Bar>> GetHistoricalBarsAsync(
+    private async Task<List<PriceHistoryItem>?> GetHistoricalHistoryAsync(
         List<string> symbols,
-        string period,
         int timeframeMinutes)
     {
         var now = DateTime.UtcNow;
-        var neededBarsCount = 50; // Нам нужно 50 баров
-
-        // Получаем множитель запаса
+        var neededBarsCount = 50;
         var multiplier = GetSafetyMultiplier(timeframeMinutes);
         var requestedBarsCount = neededBarsCount * multiplier;
-
-        // Рассчитываем from с запасом
         var from = now.AddMinutes(-timeframeMinutes * requestedBarsCount);
 
-        System.Diagnostics.Debug.WriteLine($"Loading {period} for {string.Join(",", symbols)}: " +
-            $"from={from:yyyy-MM-dd HH:mm}, to={now:yyyy-MM-dd HH:mm}, " +
-            $"requested={requestedBarsCount} bars (multiplier={multiplier})");
+        System.Diagnostics.Debug.WriteLine($"Loading history: from={from:yyyy-MM-dd HH:mm}, to={now:yyyy-MM-dd HH:mm}, requested={requestedBarsCount} bars");
 
         var response = await _apiService.GetPriceHistoryManyAsync(
             _currentOperationId,
@@ -418,53 +329,32 @@ public class ScannerViewModel : BindableObject
             timeframeMinutes);
 
         if (response == null || response.Count == 0)
-            return new List<Bar>();
+            return null;
 
-        var allBars = new List<Bar>();
-
+        // Оставляем только последние 50 баров для каждого символа
         foreach (var item in response)
         {
-            if (item.Bars == null || item.Bars.Count == 0)
+            if (item.Bars != null && item.Bars.Count > neededBarsCount)
             {
-                System.Diagnostics.Debug.WriteLine($"No bars received for {item.Symbol}");
-                continue;
+                item.Bars = item.Bars.TakeLast(neededBarsCount).ToList();
             }
-
-            System.Diagnostics.Debug.WriteLine($"Received {item.Bars.Count} bars for {item.Symbol}");
-
-            // Берём последние 50 баров (или сколько есть, если меньше)
-            var lastBars = item.Bars
-                .TakeLast(neededBarsCount)
-                .Select(b => new Bar
-                {
-                    Time = b.Time.AddHours(_utcOffset),
-                    Open = b.OpenPrice,
-                    High = b.HighPrice,
-                    Low = b.LowPrice,
-                    Close = b.ClosePrice,
-                    Volume = b.Volume,
-                    Ticks = (int)b.TickVolume
-                })
-                .ToList();
-
-            System.Diagnostics.Debug.WriteLine($"After TakeLast({neededBarsCount}): {lastBars.Count} bars for {item.Symbol}");
-
-            allBars.AddRange(lastBars);
+            System.Diagnostics.Debug.WriteLine($"Symbol {item.Symbol}: {item.Bars?.Count ?? 0} bars after trim");
         }
 
-        return allBars;
+        return response;
     }
 
     /// <summary>
-    /// Получить бары для режима достройки (минутные данные + агрегация)
+    /// Загружает данные для достройки текущего бара (минутные данные)
     /// </summary>
-    private async Task<List<Bar>> GetBuildingBarsAsync(
+    private async Task<List<PriceHistoryItem>?> GetBuildingHistoryAsync(
         List<string> symbols,
-        string period,
         int timeframeMinutes)
     {
         var now = DateTime.UtcNow;
         var periodStart = _timeAggregationService.FloorToTimeframe(now.AddHours(_utcOffset), timeframeMinutes).ToUniversalTime();
+
+        System.Diagnostics.Debug.WriteLine($"Building mode: from={periodStart:yyyy-MM-dd HH:mm}, to={now:yyyy-MM-dd HH:mm}");
 
         var response = await _apiService.GetPriceHistoryManyAsync(
             _currentOperationId,
@@ -473,31 +363,69 @@ public class ScannerViewModel : BindableObject
             now,
             1); // M1
 
-        if (response == null || response.Count == 0)
-            return new List<Bar>();
+        return response;
+    }
 
-        var resultBars = new List<Bar>();
-
-        foreach (var item in response)
+    /// <summary>
+    /// Формирует DisplayRows из результатов расчёта
+    /// </summary>
+    private void BuildDisplayRows(List<InstrumentScanResult> allResults)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            var minuteBars = item.Bars.Select(b => new Bar
+            var displayRows = new ObservableCollection<DisplayRow>();
+            var toolIndex = 0;
+
+            foreach (var result in allResults.OrderBy(r => r.Name))
             {
-                Time = b.Time.AddHours(_utcOffset),
-                Open = b.OpenPrice,
-                High = b.HighPrice,
-                Low = b.LowPrice,
-                Close = b.ClosePrice,
-                Volume = b.Volume,
-                Ticks = (int)b.TickVolume
-            }).ToList();
+                var pairColor = (toolIndex % 2 == 0) ? "White" : "#F8F8F8";
 
-            var currentBar = _timeAggregationService.BuildCurrentBarFromMinutes(
-                minuteBars, timeframeMinutes, _utcOffset);
+                // W5e
+                var w5eColor = GetWprColor(result.W5e);
+                var w5eText = result.W5e?.BarNumber.ToString() ?? "";
 
-            resultBars.Add(currentBar);
-        }
+                displayRows.Add(new DisplayRow
+                {
+                    Name = result.Name,
+                    Period = result.Period,
+                    C5 = result.C5,
+                    F2 = result.F2,
+                    WprDisplay = w5eText,
+                    WprColor = w5eColor.Item1,
+                    WprTextColor = w5eColor.Item2,
+                    IsFirstRow = true,
+                    IsSecondRow = false,
+                    PairColor = pairColor
+                });
 
-        return resultBars;
+                // W21e
+                var w21eColor = GetWprColor(result.W21e);
+                var w21eText = result.W21e?.BarNumber.ToString() ?? "";
+
+                displayRows.Add(new DisplayRow
+                {
+                    Name = null,
+                    Period = null,
+                    C5 = null,
+                    F2 = null,
+                    WprDisplay = w21eText,
+                    WprColor = w21eColor.Item1,
+                    WprTextColor = w21eColor.Item2,
+                    IsFirstRow = false,
+                    IsSecondRow = true,
+                    PairColor = pairColor
+                });
+
+                toolIndex++;
+            }
+
+            DisplayRows.Clear();
+            foreach (var row in displayRows)
+                DisplayRows.Add(row);
+
+            LastUpdateTime = DateTime.Now;
+            StatusMessage = $"Обновлено: {allResults.Count} инструментов";
+        });
     }
 
     /// <summary>
