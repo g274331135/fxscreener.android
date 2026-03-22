@@ -318,7 +318,7 @@ public class ScannerViewModel : BindableObject
         System.Diagnostics.Debug.WriteLine($"Loading history: from={from:yyyy-MM-dd HH:mm}, to={now:yyyy-MM-dd HH:mm}, requested={requestedBarsCount} bars");
 
         var response = await _apiService.GetPriceHistoryManyAsync(
-            symbols,  // больше не передаём operationId
+            symbols,
             from,
             now,
             timeframeMinutes);
@@ -326,14 +326,21 @@ public class ScannerViewModel : BindableObject
         if (response == null || response.Count == 0)
             return null;
 
-        // Оставляем только последние 50 баров для каждого символа
+        // Обрабатываем каждый символ
         foreach (var item in response)
         {
-            if (item.Bars != null && item.Bars.Count > neededBarsCount)
-            {
-                item.Bars = item.Bars.TakeLast(neededBarsCount).ToList();
-            }
-            System.Diagnostics.Debug.WriteLine($"Symbol {item.Symbol}: {item.Bars?.Count ?? 0} bars after trim");
+            if (item.Bars == null || item.Bars.Count == 0)
+                continue;
+
+            // Берём последние 50 баров
+            var lastBars = item.Bars.TakeLast(neededBarsCount).ToList();
+
+            // ✅ ВАЖНО: разворачиваем список, чтобы bars[0] был последним баром
+            lastBars.Reverse();
+
+            item.Bars = lastBars;
+
+            System.Diagnostics.Debug.WriteLine($"Symbol {item.Symbol}: {item.Bars.Count} bars (reversed, index0 is newest)");
         }
 
         return response;
@@ -356,6 +363,19 @@ public class ScannerViewModel : BindableObject
             periodStart,
             now,
             1); // M1
+
+        if (response == null || response.Count == 0)
+            return null;
+
+        // Разворачиваем бары для каждого символа
+        foreach (var item in response)
+        {
+            if (item.Bars != null && item.Bars.Count > 0)
+            {
+                item.Bars.Reverse();
+                System.Diagnostics.Debug.WriteLine($"Building mode: {item.Symbol} has {item.Bars.Count} bars (reversed)");
+            }
+        }
 
         return response;
     }

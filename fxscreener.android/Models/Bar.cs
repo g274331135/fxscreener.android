@@ -303,18 +303,39 @@ public static class BarExtensions
     /// </summary>
     public static double CalculateWPR(this List<Bar> bars, int index, int period)
     {
-        if (bars.Count < index + 1 || index - period + 1 < 0)
+        // bars[0] — последний бар (текущий)
+        // bars[1] — предыдущий бар
+        // bars[index] — бар на index позиций назад
+
+        if (bars.Count < index + 1)
             return 0;
 
-        int startIndex = Math.Max(0, index - period + 1);
-        int actualPeriod = index - startIndex + 1;
+        // Находим нужный диапазон баров
+        // Для WPR(5) на баре index нужно смотреть бары от index до index + period - 1
+        // так как bars[0] — последний, bars[1] — предыдущий, bars[2] — позапрошлый...
 
-        double highestHigh = bars.HighestHigh(startIndex, actualPeriod);
-        double lowestLow = bars.LowestLow(startIndex, actualPeriod);
+        int startIndex = index;
+        int endIndex = Math.Min(index + period - 1, bars.Count - 1);
+        int actualPeriod = endIndex - startIndex + 1;
+
+        if (actualPeriod < period)
+            return 0;
+
+        double highestHigh = double.MinValue;
+        double lowestLow = double.MaxValue;
+
+        for (int i = startIndex; i <= endIndex; i++)
+        {
+            if (bars[i].High > highestHigh)
+                highestHigh = bars[i].High;
+            if (bars[i].Low < lowestLow)
+                lowestLow = bars[i].Low;
+        }
 
         if (Math.Abs(highestHigh - lowestLow) < 0.000001)
             return 0;
 
+        // Williams %R = (HighestHigh - Close) / (HighestHigh - LowestLow) * -100
         return -100 * (highestHigh - bars[index].Close) / (highestHigh - lowestLow);
     }
 

@@ -76,7 +76,7 @@ public class IndicatorCalculator : IIndicatorCalculator
             }
         }
 
-        return null; // Нет сигнала за последние 5 баров
+        return null;
     }
 
     #endregion
@@ -105,6 +105,8 @@ public class IndicatorCalculator : IIndicatorCalculator
     {
         if (bars.Count < 6) return string.Empty;
 
+        // bars[0] — последний бар (текущий)
+        // bars[5] — бар 5 периодов назад
         var currentClose = bars[0].Close;
         var bar5Close = bars[5].Close;
 
