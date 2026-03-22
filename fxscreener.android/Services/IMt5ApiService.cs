@@ -49,7 +49,6 @@ public interface IMt5ApiService
     /// </summary>
     /// <param name="cancellationToken">Токен отмены (для прогресса)</param>
     Task<PriceHistoryManyResponse?> GetPriceHistoryManyAsync(
-        string operationId,
         List<string> symbols,
         DateTime from,
         DateTime to,

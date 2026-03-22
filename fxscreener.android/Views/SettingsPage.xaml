@@ -41,11 +41,6 @@
                    Placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                    ClearButtonVisibility="WhileEditing"/>
 
-            <Label Text="Operation ID:" FontSize="14" FontAttributes="Bold"/>
-            <Entry Text="{Binding OperationId}"
-                   Placeholder="operation id"
-                   ClearButtonVisibility="WhileEditing"/>
-
             <Label Text="Часовой пояс (UTC смещение):" FontSize="14" FontAttributes="Bold"/>
             <Entry Text="{Binding UtcOffset}"
                    Placeholder="3 (Москва)"

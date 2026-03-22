@@ -12,7 +12,6 @@ public class ApiSettings
     public string Host { get; set; } = "mt5full2.mtapi.io";
     public int Port { get; set; } = 443;
     public string ApiKey { get; set; } = string.Empty;
-    public string OperationId { get; set; } = string.Empty;
     public int UtcOffset { get; set; } = 3;
 
     /// <summary>
@@ -73,7 +72,6 @@ public class ApiSettings
                !string.IsNullOrWhiteSpace(Password) &&
                !string.IsNullOrWhiteSpace(Host) &&
                Port > 0 && Port <= 65535 &&
-               !string.IsNullOrWhiteSpace(ApiKey) &&
-               !string.IsNullOrWhiteSpace(OperationId);
+               !string.IsNullOrWhiteSpace(ApiKey);
     }
 }

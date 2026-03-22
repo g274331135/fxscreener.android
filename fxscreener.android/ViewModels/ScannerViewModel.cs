@@ -140,10 +140,6 @@ public class ScannerViewModel : BindableObject
         {
             // Загружаем настройки чтобы получить OperationId
             var settings = await ApiSettings.LoadAsync();
-            if (settings != null)
-            {
-                _currentOperationId = settings.OperationId;
-            }
 
             var loaded = await InstrumentsStorage.LoadAsync();
             // Копируем инструменты в наше поле (но нам нужен доступ к ним)
@@ -322,8 +318,7 @@ public class ScannerViewModel : BindableObject
         System.Diagnostics.Debug.WriteLine($"Loading history: from={from:yyyy-MM-dd HH:mm}, to={now:yyyy-MM-dd HH:mm}, requested={requestedBarsCount} bars");
 
         var response = await _apiService.GetPriceHistoryManyAsync(
-            _currentOperationId,
-            symbols,
+            symbols,  // больше не передаём operationId
             from,
             now,
             timeframeMinutes);
@@ -357,7 +352,6 @@ public class ScannerViewModel : BindableObject
         System.Diagnostics.Debug.WriteLine($"Building mode: from={periodStart:yyyy-MM-dd HH:mm}, to={now:yyyy-MM-dd HH:mm}");
 
         var response = await _apiService.GetPriceHistoryManyAsync(
-            _currentOperationId,
             symbols,
             periodStart,
             now,

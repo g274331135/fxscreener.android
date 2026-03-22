@@ -47,13 +47,6 @@ public class SettingsViewModel : BindableObject
         set { _apiKey = value; OnPropertyChanged(); }
     }
 
-    private string _operationId = string.Empty;
-    public string OperationId
-    {
-        get => _operationId;
-        set { _operationId = value; OnPropertyChanged(); }
-    }
-
     private string _utcOffset = "3";
     public string UtcOffset
     {
@@ -117,7 +110,6 @@ public class SettingsViewModel : BindableObject
                 Host = settings.Host;
                 Port = settings.Port.ToString();
                 ApiKey = settings.ApiKey;
-                OperationId = settings.OperationId;
                 UtcOffset = settings.UtcOffset.ToString();
 
                 StatusMessage = "Настройки загружены";
@@ -218,7 +210,6 @@ public class SettingsViewModel : BindableObject
             string.IsNullOrWhiteSpace(Host) ||
             !int.TryParse(Port, out _) ||
             string.IsNullOrWhiteSpace(ApiKey) ||
-            string.IsNullOrWhiteSpace(OperationId) ||
             !int.TryParse(UtcOffset, out _))
         {
             StatusMessage = "❌ Заполните все поля корректно";
@@ -238,7 +229,6 @@ public class SettingsViewModel : BindableObject
             Host = Host.Trim(),
             Port = int.Parse(Port),
             ApiKey = ApiKey.Trim(),
-            OperationId = OperationId.Trim(),
             UtcOffset = int.Parse(UtcOffset)
         };
     }

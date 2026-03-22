@@ -145,10 +145,6 @@ public class InstrumentsViewModel : BindableObject
         {
             // Загружаем настройки API для OperationId
             var settings = await ApiSettings.LoadAsync();
-            if (settings != null)
-            {
-                _currentOperationId = settings.OperationId;
-            }
 
             _storage = await InstrumentsStorage.LoadAsync();
 
@@ -333,8 +329,6 @@ public class InstrumentsViewModel : BindableObject
                     StatusColor = Colors.Red;
                     return;
                 }
-
-                _currentOperationId = settings.OperationId;
             }
 
             StatusMessage = "Обновление параметров из API...";
