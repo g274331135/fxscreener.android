@@ -107,7 +107,7 @@ public class IndicatorCalculator : IIndicatorCalculator
         //          И закрытие текущего бара ВЫШЕ открытия
         if (currentWpr < prevWpr && prevWpr > -20 && bars[0].IsBullish)
         {
-            return new UdSignal { SignalType = UdSignalType.Bullish };
+            return new UdSignal { SignalType = UdSignalType.Bearish };
         }
 
         // Медвежий сигнал (светло-красный)
@@ -116,7 +116,7 @@ public class IndicatorCalculator : IIndicatorCalculator
         //          И закрытие текущего бара НИЖЕ открытия
         if (currentWpr > prevWpr && prevWpr < -80 && bars[0].IsBearish)
         {
-            return new UdSignal { SignalType = UdSignalType.Bearish };
+            return new UdSignal { SignalType = UdSignalType.Bullish };
         }
 
         return null;

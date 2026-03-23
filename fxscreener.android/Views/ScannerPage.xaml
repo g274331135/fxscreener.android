@@ -139,7 +139,7 @@
                         <Label Grid.Row="1" Grid.Column="4" Text="W21e" Style="{StaticResource GridHeaderLabel}"/>
                         <Label Grid.Row="1" Grid.Column="5" Text="UD21" Style="{StaticResource GridHeaderLabel}"/>
 
-                        <!-- Пустые ячейки во второй строке -->
+                        <!-- Пустые ячейки -->
                         <BoxView Grid.Row="1" Grid.Column="0" BackgroundColor="Transparent"/>
                         <BoxView Grid.Row="1" Grid.Column="1" BackgroundColor="Transparent"/>
                         <BoxView Grid.Row="1" Grid.Column="2" BackgroundColor="Transparent"/>
@@ -154,13 +154,13 @@
                               ColumnSpacing="1" 
                               RowSpacing="1"
                               BackgroundColor="{Binding PairColor}">
-                            <!-- изменено с RowColor на PairColor -->
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="50"/>
                                 <ColumnDefinition Width="45"/>
                                 <ColumnDefinition Width="45"/>
                                 <ColumnDefinition Width="55"/>
+                                <ColumnDefinition Width="45"/>
                             </Grid.ColumnDefinitions>
 
                             <!-- Первая строка пары -->
@@ -199,7 +199,8 @@
                                 <Label Text="{Binding WprDisplay}"
                                        Style="{StaticResource GridCellLabel}"
                                        TextColor="{Binding WprTextColor}"
-                                       FontAttributes="Bold"/>
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"/>
                             </Frame>
 
                             <!-- UD5/UD21 ячейка -->
@@ -211,9 +212,9 @@
                                    HorizontalOptions="Fill"
                                    VerticalOptions="Fill">
                                 <Label Text="{Binding UdDisplay}"
-                                       Style="{StaticResource GridCellLabel}"
-                                       FontAttributes="Bold"
-                                       HorizontalOptions="Center"/>
+                       Style="{StaticResource GridCellLabel}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"/>
                             </Frame>
                         </Grid>
                     </DataTemplate>
