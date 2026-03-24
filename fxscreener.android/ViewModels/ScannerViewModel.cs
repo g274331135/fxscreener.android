@@ -1,7 +1,8 @@
-﻿using System.Collections.ObjectModel;
-using System.Windows.Input;
+﻿using AndroidX.Lifecycle;
 using fxscreener.android.Models;
 using fxscreener.android.Services;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace fxscreener.android.ViewModels;
 
@@ -458,6 +459,27 @@ public class ScannerViewModel : BindableObject
         };
     }
 
+    #endregion
+
+    #region Обработчики
+    private async void OnItemTapped(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.CurrentSelection.FirstOrDefault() is DisplayRow row && row.IsFirstRow)
+        {
+            // Найти инструмент по Name и Period
+            var instrument = _viewModel.GetInstrumentByName(row.Name, row.Period);
+            if (instrument != null)
+            {
+                var chartVM = _serviceProvider.GetRequiredService<ChartViewModel>();
+                // Подготовить данные: бары, WPR5, WPR21
+                var bars = ... // из кэша или из результата сканирования
+                var wpr5 = ...;
+                var wpr21 = ...;
+                await chartVM.LoadData(instrument.Symbol, instrument.Period, bars, wpr5, wpr21);
+                await Shell.Current.GoToAsync($"chart", new Dictionary<string, object> { { "vm", chartVM } });
+            }
+        }
+    }
     #endregion
 
     #region Вспомогательные методы
