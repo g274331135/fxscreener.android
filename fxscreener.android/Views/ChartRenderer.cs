@@ -188,14 +188,26 @@ public class ChartRenderer
     }
 
     // Метод для получения индекса бара по координате
-    public int GetBarIndexAtPoint(SKPoint point, ChartData data)
+    public int GetBarIndexAtPoint(SKPoint point, ChartData data, float canvasWidth)
     {
-        // упрощённо: считаем ширину бара на основе видимой области
         var visibleCount = data.VisibleEndIndex - data.VisibleStartIndex + 1;
-        var barWidth = (float)canvasView.Width / visibleCount;
+        var barWidth = canvasWidth / visibleCount;
         var idx = (int)(point.X / barWidth);
         return data.VisibleStartIndex + idx;
     }
 
-    // Остальные вспомогательные методы (DrawPriceLabels, DrawTimeLabels, DrawTooltip) опущены для краткости
+    private void DrawPriceLabels(SKCanvas canvas, int width, float panelHeight, double minPrice, double maxPrice)
+    {
+        // Заглушка — позже можно реализовать
+    }
+
+    private void DrawTimeLabels(SKCanvas canvas, int width, float yPos, List<Bar> visibleBars, float barWidth)
+    {
+        // Заглушка
+    }
+
+    private void DrawTooltip(SKCanvas canvas, Bar bar, double wpr5, double wpr21, int index, int width, int height)
+    {
+        // Заглушка
+    }
 }

@@ -1,3 +1,4 @@
+п»їusing fxscreener.android.Models;
 using fxscreener.android.ViewModels;
 using fxscreener.android.Views;
 
@@ -19,20 +20,40 @@ public partial class ScannerPage : ContentPage
     private async void OnMenuButtonClicked(object sender, EventArgs e)
     {
         var action = await DisplayActionSheet(
-            "Меню",
-            "Отмена",
+            "РњРµРЅСЋ",
+            "РћС‚РјРµРЅР°",
             null,
-            "Настройки подключения",
-            "Управление инструментами");
+            "РќР°СЃС‚СЂРѕР№РєРё РїРѕРґРєР»СЋС‡РµРЅРёСЏ",
+            "РЈРїСЂР°РІР»РµРЅРёРµ РёРЅСЃС‚СЂСѓРјРµРЅС‚Р°РјРё");
 
-        if (action == "Настройки подключения")
+        if (action == "РќР°СЃС‚СЂРѕР№РєРё РїРѕРґРєР»СЋС‡РµРЅРёСЏ")
         {
-            // Используем Shell для навигации
+            // РСЃРїРѕР»СЊР·СѓРµРј Shell РґР»СЏ РЅР°РІРёРіР°С†РёРё
             await Shell.Current.GoToAsync("settings");
         }
-        else if (action == "Управление инструментами")
+        else if (action == "РЈРїСЂР°РІР»РµРЅРёРµ РёРЅСЃС‚СЂСѓРјРµРЅС‚Р°РјРё")
         {
             await Shell.Current.GoToAsync("instruments");
+        }
+    }
+
+    private async void OnInstrumentTapped(object sender, TappedEventArgs e)
+    {
+        if (sender is Grid grid && grid.BindingContext is DisplayRow row && row.IsFirstRow)
+        {
+            // РќР°Р№С‚Рё РёРЅСЃС‚СЂСѓРјРµРЅС‚ РїРѕ row.Name Рё row.Period
+            var instrument = _viewModel.GetInstrumentByName(row.Name, row.Period);
+            if (instrument != null)
+            {
+                // РџРѕР»СѓС‡РёС‚СЊ Р±Р°СЂС‹ Рё WPR Р·РЅР°С‡РµРЅРёСЏ (РЅСѓР¶РЅРѕ Р±СѓРґРµС‚ РґРѕР±Р°РІРёС‚СЊ РІ ViewModel)
+                var bars = _viewModel.GetBarsForInstrument(instrument);
+                var wpr5 = _viewModel.GetWpr5ForInstrument(instrument);
+                var wpr21 = _viewModel.GetWpr21ForInstrument(instrument);
+
+                var chartVM = _serviceProvider.GetRequiredService<ChartViewModel>();
+                await chartVM.LoadData(instrument.Symbol, instrument.Period, bars, wpr5, wpr21);
+                await Shell.Current.GoToAsync("chart");
+            }
         }
     }
 }

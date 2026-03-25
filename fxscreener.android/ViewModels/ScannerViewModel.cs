@@ -26,6 +26,8 @@ public class ScannerViewModel : BindableObject
     // Кэш для истории (по символу и периоду)
     private readonly Dictionary<string, List<Bar>> _historyCache = new();
 
+    private Dictionary<string, (List<Bar> bars, List<double> wpr5, List<double> wpr21)> _chartDataCache = new();
+
     #endregion
 
     #region Конструктор

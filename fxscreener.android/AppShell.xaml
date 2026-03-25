@@ -19,4 +19,8 @@
                   Route="instruments" 
                   ContentTemplate="{DataTemplate views:InstrumentsPage}" />
 
+    <ShellContent Title="Chart" 
+                  Route="chart" 
+                  ContentTemplate="{DataTemplate views:ChartPage}" />
+
 </Shell>

@@ -39,7 +39,7 @@ public partial class ChartPage : ContentPage
         if (e.ActionType == SKTouchAction.Pressed)
         {
             var location = e.Location;
-            var index = _renderer.GetBarIndexAtPoint(location, _viewModel.ChartData);
+            var index = _renderer.GetBarIndexAtPoint(location, _viewModel.ChartData, canvasView.CanvasSize.Width);
             if (index >= 0 && index < _viewModel.ChartData.Bars.Count)
             {
                 _viewModel.ChartData.SelectedIndex = index;

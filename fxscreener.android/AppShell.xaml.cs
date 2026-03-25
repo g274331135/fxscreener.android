@@ -28,6 +28,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("settings", typeof(SettingsPage));
         Routing.RegisterRoute("instruments", typeof(InstrumentsPage));
         Routing.RegisterRoute("scanner", typeof(ScannerPage));
+        Routing.RegisterRoute("chart", typeof(ChartPage));
     }
 
     // Вспомогательный метод для навигации

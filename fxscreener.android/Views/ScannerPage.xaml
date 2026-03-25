@@ -154,6 +154,9 @@
                               ColumnSpacing="1" 
                               RowSpacing="1"
                               BackgroundColor="{Binding PairColor}">
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnInstrumentTapped" NumberOfTapsRequired="2"/>
+                            </Grid.GestureRecognizers>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="50"/>
