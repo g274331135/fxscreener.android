@@ -463,27 +463,6 @@ public class ScannerViewModel : BindableObject
 
     #endregion
 
-    #region Обработчики
-    private async void OnInstrumentTapped(object sender, TappedEventArgs e)
-    {
-        if (sender is Grid grid && grid.BindingContext is DisplayRow row && row.IsFirstRow)
-        {
-            var instrument = _viewModel.GetInstrumentByName(row.Name, row.Period); // этот метод нужно добавить в ViewModel
-            if (instrument == null) return;
-
-            var chartData = _viewModel.GetChartData(row.Name, row.Period);
-            if (chartData == null) return;
-
-            var (bars, wpr5, wpr21) = chartData.Value;
-
-            var chartVM = _serviceProvider.GetRequiredService<ChartViewModel>();
-            await chartVM.LoadData(instrument.Symbol, instrument.Period, bars, wpr5, wpr21);
-            await Shell.Current.GoToAsync("chart");
-        }
-    }
-
-    #endregion
-
     #region Вспомогательные методы
 
     public (List<Bar> bars, List<double> wpr5, List<double> wpr21)? GetChartData(string symbol, string period)

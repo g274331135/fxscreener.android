@@ -37,7 +37,7 @@ public partial class ScannerPage : ContentPage
         }
     }
 
-    // Обработчик двойного касания на строке инструмента
+    // Обработчик двойного касания
     private async void OnInstrumentTapped(object sender, TappedEventArgs e)
     {
         if (sender is Grid grid && grid.BindingContext is DisplayRow row && row.IsFirstRow)
