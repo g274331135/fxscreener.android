@@ -36,11 +36,13 @@ public static class MauiProgram
         builder.Services.AddTransient<ScannerViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddTransient<InstrumentsViewModel>();
+        builder.Services.AddTransient<ChartViewModel>();
 
         // Views
         builder.Services.AddTransient<ScannerPage>();
         builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<InstrumentsPage>();
+        builder.Services.AddTransient<ChartPage>();
 
         // Shell
         builder.Services.AddSingleton<AppShell>();
