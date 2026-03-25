@@ -1,5 +1,4 @@
-﻿using AndroidX.Lifecycle;
-using fxscreener.android.Models;
+﻿using fxscreener.android.Models;
 using fxscreener.android.Services;
 using System.Collections.ObjectModel;
 using System.Windows.Input;
@@ -197,12 +196,9 @@ public class ScannerViewModel : BindableObject
                 {
                     var itemForSymbol = historyItems.FirstOrDefault(h => h.Symbol == instrument.Symbol);
                     if (itemForSymbol?.Bars == null || itemForSymbol.Bars.Count < 21)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Not enough bars for {instrument.Symbol} ({itemForSymbol?.Bars.Count ?? 0})");
                         continue;
-                    }
 
-                    // Конвертируем бары API в наш формат Bar и корректируем время
+                    // Конвертируем бары
                     var bars = itemForSymbol.Bars.Select(b => new Bar
                     {
                         Time = b.Time.AddHours(_utcOffset),
@@ -214,13 +210,17 @@ public class ScannerViewModel : BindableObject
                         Ticks = (int)b.TickVolume
                     }).ToList();
 
-                    // Сохраняем в кэш истории (по символу + периоду)
-                    var cacheKey = $"{instrument.Symbol}_{period}";
-                    _historyCache[cacheKey] = bars;
+                    // ✅ НОВЫЙ КОД: получаем WPR значения и сохраняем в кэш
+                    var wpr5Values = _indicatorCalculator.GetWprValues(bars, 5);
+                    var wpr21Values = _indicatorCalculator.GetWprValues(bars, 21);
 
-                    // Рассчитываем индикаторы на истории
+                    var cacheKey = $"{instrument.Symbol}_{instrument.Period}";
+                    _chartDataCache[cacheKey] = (bars, wpr5Values, wpr21Values);
+
+                    // Рассчитываем индикаторы для грида
                     var result = _indicatorCalculator.CalculateForInstrument(
                         instrument.Symbol, period, bars);
+
                     allResults.Add(result);
                 }
             }
@@ -464,27 +464,42 @@ public class ScannerViewModel : BindableObject
     #endregion
 
     #region Обработчики
-    private async void OnItemTapped(object sender, SelectionChangedEventArgs e)
+    private async void OnInstrumentTapped(object sender, TappedEventArgs e)
     {
-        if (e.CurrentSelection.FirstOrDefault() is DisplayRow row && row.IsFirstRow)
+        if (sender is Grid grid && grid.BindingContext is DisplayRow row && row.IsFirstRow)
         {
-            // Найти инструмент по Name и Period
-            var instrument = _viewModel.GetInstrumentByName(row.Name, row.Period);
-            if (instrument != null)
-            {
-                var chartVM = _serviceProvider.GetRequiredService<ChartViewModel>();
-                // Подготовить данные: бары, WPR5, WPR21
-                var bars = ... // из кэша или из результата сканирования
-                var wpr5 = ...;
-                var wpr21 = ...;
-                await chartVM.LoadData(instrument.Symbol, instrument.Period, bars, wpr5, wpr21);
-                await Shell.Current.GoToAsync($"chart", new Dictionary<string, object> { { "vm", chartVM } });
-            }
+            var instrument = _viewModel.GetInstrumentByName(row.Name, row.Period); // этот метод нужно добавить в ViewModel
+            if (instrument == null) return;
+
+            var chartData = _viewModel.GetChartData(row.Name, row.Period);
+            if (chartData == null) return;
+
+            var (bars, wpr5, wpr21) = chartData.Value;
+
+            var chartVM = _serviceProvider.GetRequiredService<ChartViewModel>();
+            await chartVM.LoadData(instrument.Symbol, instrument.Period, bars, wpr5, wpr21);
+            await Shell.Current.GoToAsync("chart");
         }
     }
+
     #endregion
 
     #region Вспомогательные методы
+
+    public (List<Bar> bars, List<double> wpr5, List<double> wpr21)? GetChartData(string symbol, string period)
+    {
+        var key = $"{symbol}_{period}";
+        if (_chartDataCache.TryGetValue(key, out var data))
+            return data;
+        return null;
+    }
+
+    public InstrumentParams? GetInstrumentByName(string symbol, string period)
+    {
+        // Загружаем инструменты синхронно (или используйте _storage, если он уже загружен)
+        var storage = InstrumentsStorage.LoadAsync().GetAwaiter().GetResult();
+        return storage.Get(symbol, period);
+    }
 
     private async Task ForceRefreshAsync()
     {

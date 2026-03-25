@@ -38,6 +38,19 @@ public class IndicatorCalculator : IIndicatorCalculator
 
     #endregion
 
+    public List<double> GetWprValues(List<Bar> bars, int period)
+    {
+        var result = new List<double>();
+
+        for (int i = 0; i < bars.Count; i++)
+        {
+            var wpr = CalculateWPR(bars, i, period);
+            result.Add(wpr);
+        }
+
+        return result;
+    }
+
     #region WPR сигнал (новая логика)
 
     public WprSignal? GetWprSignal(List<Bar> bars, int period)

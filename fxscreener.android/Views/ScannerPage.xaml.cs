@@ -1,6 +1,7 @@
 ﻿using fxscreener.android.Models;
 using fxscreener.android.ViewModels;
 using fxscreener.android.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace fxscreener.android.Views;
 
@@ -28,7 +29,6 @@ public partial class ScannerPage : ContentPage
 
         if (action == "Настройки подключения")
         {
-            // Используем Shell для навигации
             await Shell.Current.GoToAsync("settings");
         }
         else if (action == "Управление инструментами")
@@ -37,23 +37,22 @@ public partial class ScannerPage : ContentPage
         }
     }
 
+    // Обработчик двойного касания на строке инструмента
     private async void OnInstrumentTapped(object sender, TappedEventArgs e)
     {
         if (sender is Grid grid && grid.BindingContext is DisplayRow row && row.IsFirstRow)
         {
-            // Найти инструмент по row.Name и row.Period
             var instrument = _viewModel.GetInstrumentByName(row.Name, row.Period);
-            if (instrument != null)
-            {
-                // Получить бары и WPR значения (нужно будет добавить в ViewModel)
-                var bars = _viewModel.GetBarsForInstrument(instrument);
-                var wpr5 = _viewModel.GetWpr5ForInstrument(instrument);
-                var wpr21 = _viewModel.GetWpr21ForInstrument(instrument);
+            if (instrument == null) return;
 
-                var chartVM = _serviceProvider.GetRequiredService<ChartViewModel>();
-                await chartVM.LoadData(instrument.Symbol, instrument.Period, bars, wpr5, wpr21);
-                await Shell.Current.GoToAsync("chart");
-            }
+            var chartData = _viewModel.GetChartData(row.Name, row.Period);
+            if (chartData == null) return;
+
+            var (bars, wpr5, wpr21) = chartData.Value;
+
+            var chartVM = _serviceProvider.GetRequiredService<ChartViewModel>();
+            await chartVM.LoadData(instrument.Symbol, instrument.Period, bars, wpr5, wpr21);
+            await Shell.Current.GoToAsync("chart");
         }
     }
 }

@@ -10,6 +10,11 @@ public interface IIndicatorCalculator
     InstrumentScanResult CalculateForInstrument(string symbol, string period, List<Bar> bars);
 
     /// <summary>
+    /// Получить список значений WPR для всех баров
+    /// </summary>
+    List<double> GetWprValues(List<Bar> bars, int period);
+
+    /// <summary>
     /// Рассчитать WPR для указанного индекса
     /// </summary>
     double CalculateWPR(List<Bar> bars, int index, int period);
