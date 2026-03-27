@@ -28,6 +28,8 @@ public class ChartViewModel : BindableObject
 
     public async Task LoadData(string symbol, string period, List<Bar> bars, List<double> wpr5Values, List<double> wpr21Values)
     {
+        System.Diagnostics.Debug.WriteLine($"LoadData called on ViewModel hash: {this.GetHashCode()}");
+
         IsLoading = true;
 
         try
@@ -70,6 +72,8 @@ public class ChartViewModel : BindableObject
         {
             IsLoading = false;
         }
+
+        System.Diagnostics.Debug.WriteLine($"ChartData assigned: Bars={ChartData.Bars.Count}, Wpr5={ChartData.Wpr5.Count}, Wpr21={ChartData.Wpr21.Count}");
     }
 
     private async Task Close()

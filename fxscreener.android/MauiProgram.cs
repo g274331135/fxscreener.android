@@ -23,6 +23,11 @@ public static class MauiProgram
                 fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
             });
 
+        builder.Services.AddSingleton<INavigation>(sp =>
+        {
+            return Application.Current?.MainPage?.Navigation ?? throw new InvalidOperationException("Navigation not available");
+        });
+
         // Сервисы
         builder.Services.AddSingleton<IMt5ApiService, Mt5ApiService>();
         builder.Services.AddSingleton<IIndicatorCalculator, IndicatorCalculator>();
@@ -33,16 +38,16 @@ public static class MauiProgram
         builder.Services.AddSingleton<IBuildingService, BuildingService>();
 
         // ViewModels
+        builder.Services.AddSingleton<ChartViewModel>();
         builder.Services.AddTransient<ScannerViewModel>();
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddTransient<InstrumentsViewModel>();
-        builder.Services.AddTransient<ChartViewModel>();
 
         // Views
+        builder.Services.AddTransient<ChartPage>();
         builder.Services.AddTransient<ScannerPage>();
         builder.Services.AddTransient<SettingsPage>();
         builder.Services.AddTransient<InstrumentsPage>();
-        builder.Services.AddTransient<ChartPage>();
 
         // Shell
         builder.Services.AddSingleton<AppShell>();

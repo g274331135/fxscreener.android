@@ -210,7 +210,7 @@ public class ScannerViewModel : BindableObject
                         Ticks = (int)b.TickVolume
                     }).ToList();
 
-                    // ✅ НОВЫЙ КОД: получаем WPR значения и сохраняем в кэш
+                    // получаем WPR значения и сохраняем в кэш
                     var wpr5Values = _indicatorCalculator.GetWprValues(bars, 5);
                     var wpr21Values = _indicatorCalculator.GetWprValues(bars, 21);
 
@@ -473,11 +473,18 @@ public class ScannerViewModel : BindableObject
         return null;
     }
 
-    public InstrumentParams? GetInstrumentByName(string symbol, string period)
+    public async Task<InstrumentParams?> GetInstrumentByName(string symbol, string period)
     {
-        // Загружаем инструменты синхронно (или используйте _storage, если он уже загружен)
-        var storage = InstrumentsStorage.LoadAsync().GetAwaiter().GetResult();
-        return storage.Get(symbol, period);
+        try
+        {
+            var storage = await InstrumentsStorage.LoadAsync();
+            return storage.Get(symbol, period);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"GetInstrumentByName error: {ex.Message}");
+            return null;
+        }
     }
 
     private async Task ForceRefreshAsync()

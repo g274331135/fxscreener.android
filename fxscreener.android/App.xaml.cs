@@ -1,5 +1,4 @@
-﻿using fxscreener.android.Models;
-using fxscreener.android.Services;
+﻿using fxscreener.android.Services;
 using fxscreener.android.Views;
 
 namespace fxscreener.android;
@@ -8,6 +7,7 @@ public partial class App : Application
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IMt5ApiService _apiService;
+    private AppShell? _shell;
 
     public App(IServiceProvider serviceProvider)
     {
@@ -18,67 +18,39 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // Создаём Shell
-        var shell = _serviceProvider.GetRequiredService<AppShell>();
+        _shell = _serviceProvider.GetRequiredService<AppShell>();
 
-        // Асинхронно проверяем настройки и подключаемся
-        Task.Run(async () => await InitializeAppAsync(shell));
+        Task.Run(async () => await InitializeAppAsync());
 
-        return new Window(shell);
+        return new Window(_shell);
     }
 
-    private async Task InitializeAppAsync(AppShell shell)
+    private async Task InitializeAppAsync()
     {
         try
         {
-            // 1. Загружаем сохранённые настройки
-            var settings = await ApiSettings.LoadAsync();
+            var settings = await Models.ApiSettings.LoadAsync();
 
-            // 2. Если настроек нет — сразу в настройки
             if (settings == null || string.IsNullOrWhiteSpace(settings.ApiKey))
             {
-                await MainThread.InvokeOnMainThreadAsync(() =>
-                {
-                    shell.GoToAsync("//settings");
-                });
+                await MainThread.InvokeOnMainThreadAsync(() => _shell?.GoToAsync("//settings"));
                 return;
             }
 
-            // 3. Пробуем подключиться
             var connected = await _apiService.ConnectAsync(settings);
 
             await MainThread.InvokeOnMainThreadAsync(() =>
             {
                 if (connected)
-                {
-                    // Всё ок — на главный экран
-                    shell.GoToAsync("//scanner");
-                }
+                    _shell?.GoToAsync("//scanner");
                 else
-                {
-                    // Не удалось подключиться — показываем настройки с сообщением
-                    shell.GoToAsync("//settings");
-
-                    // Показываем предупреждение через небольшой таймаут
-                    MainThread.BeginInvokeOnMainThread(async () =>
-                    {
-                        await Task.Delay(500);
-                        await shell.CurrentPage?.DisplayAlert(
-                            "Ошибка подключения",
-                            "Не удалось подключиться к API. Проверьте настройки.",
-                            "OK")!;
-                    });
-                }
+                    _shell?.GoToAsync("//settings");
             });
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Init error: {ex.Message}");
-
-            await MainThread.InvokeOnMainThreadAsync(() =>
-            {
-                shell.GoToAsync("//settings");
-            });
+            await MainThread.InvokeOnMainThreadAsync(() => _shell?.GoToAsync("//settings"));
         }
     }
 
@@ -96,13 +68,13 @@ public partial class App : Application
     {
         System.Diagnostics.Debug.WriteLine("App resuming");
 
-        // При возвращении проверяем соединение
-        MainThread.BeginInvokeOnMainThread(async () =>
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            if (_apiService.IsConnected)
-            {
-                await _apiService.CheckConnectAsync();
-            }
+            // Обновляем текущую страницу
+            _shell?.CurrentPage?.ForceLayout();
         });
     }
+
+    // Метод для доступа к Shell из других классов
+    public AppShell? GetShell() => _shell;
 }

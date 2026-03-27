@@ -48,6 +48,7 @@ public class IndicatorCalculator : IIndicatorCalculator
             result.Add(wpr);
         }
 
+        result.Reverse();
         return result;
     }
 

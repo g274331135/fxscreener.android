@@ -7,6 +7,7 @@ namespace fxscreener.android.Views;
 
 public partial class ChartPage : ContentPage
 {
+    private readonly AppShell _shell;
     private ChartViewModel _viewModel;
     private ChartRenderer _renderer;
 
@@ -15,7 +16,10 @@ public partial class ChartPage : ContentPage
         InitializeComponent();
         BindingContext = viewModel;
         _viewModel = viewModel;
+        _shell = AppShell.Current ?? throw new InvalidOperationException("AppShell not available");
         _renderer = new ChartRenderer();
+
+        System.Diagnostics.Debug.WriteLine($"ChartPage created with ViewModel hash: {viewModel.GetHashCode()}");
     }
 
     private void OnCanvasPaintSurface(object sender, SKPaintSurfaceEventArgs e)
@@ -48,5 +52,18 @@ public partial class ChartPage : ContentPage
             e.Handled = true;
         }
         // Для масштабирования и скролла добавим позже
+    }
+
+    // Если есть кнопка назад
+    private async void OnBackButtonClicked(object sender, EventArgs e)
+    {
+        await _shell.SafeGoToAsync("..");
+    }
+
+    // Также можно переопределить аппаратную кнопку назад
+    protected override bool OnBackButtonPressed()
+    {
+        _ = _shell.SafeGoToAsync("..");
+        return true;
     }
 }
