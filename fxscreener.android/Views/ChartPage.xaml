@@ -6,33 +6,119 @@
              x:Class="fxscreener.android.Views.ChartPage"
              Title="График">
 
-    <dxc:ChartView>
-        <dxc:ChartView.Series>
-            <dxc:CandleStickSeries>
-                
-                <dxc:CandleStickSeries.HintOptions>
-                    <dxc:SeriesCrosshairOptions PointTextPattern="High: ${H$###.##}&#10;Open: ${O$###.##}&#10;Low: ${L$###.##}&#10;Close: ${C$###.##}"/>
-                </dxc:CandleStickSeries.HintOptions>
-                
-                <dxc:CandleStickSeries.Data>
-                    <dxc:SeriesDataAdapter DataSource="{Binding CandleData}" ArgumentDataMember="Date">
-                        <dxc:ValueDataMember Type="High" Member="High" />
-                        <dxc:ValueDataMember Type="Low" Member="Low" />
-                        <dxc:ValueDataMember Type="Open" Member="Open" />
-                        <dxc:ValueDataMember Type="Close" Member="Close" />
-                    </dxc:SeriesDataAdapter>
-                </dxc:CandleStickSeries.Data>
-                
-            </dxc:CandleStickSeries>
-        </dxc:ChartView.Series>
-
-        <!--<dxc:ChartView.Hint>
+    <!-- График -->
+    <dxc:ChartView Grid.Row="1" x:Name="chartView" AxisXNavigationMode="ScrollingAndZooming">
+        <dxc:ChartView.Hint>
             <dxc:Hint>
                 <dxc:Hint.Behavior>
-                    <dxc:CrosshairHintBehavior GroupHeaderTextPattern="*}" />
+                    <dxc:TooltipHintBehavior ShowPointTooltip="True" ShowSeriesTooltip="False"/>
                 </dxc:Hint.Behavior>
             </dxc:Hint>
-        </dxc:ChartView.Hint>-->
+        </dxc:ChartView.Hint>
+
+        <!-- Ось X (время) -->
+        <dxc:ChartView.AxisX>
+            <dxc:DateTimeAxisX EmptyRangesVisible="False">
+                <!--<dxc:DateTimeAxisX.MeasureUnit Unit="Hour" />-->
+                <!--<dxc:DateTimeAxisX.Range>
+                    <dxc:DateRange VisualMin="{Binding RangeStart}"
+                                   VisualMax="{Binding RangeEnd}"/>
+                </dxc:DateTimeAxisX.Range>-->
+            </dxc:DateTimeAxisX>
+        </dxc:ChartView.AxisX>
+
+        <!-- Основная ось Y (цены) -->
+        <dxc:ChartView.AxisY>
+            <dxc:NumericAxisY AutoRangeMode="VisibleValues" AlwaysShowZeroLevel="false">
+                <dxc:NumericAxisY.DisplayPosition>
+                    <dxc:AxisDisplayPositionFar/>
+                </dxc:NumericAxisY.DisplayPosition>
+                <dxc:NumericAxisY.Label>
+                    <dxc:AxisLabel TextFormat="F2"/>
+                </dxc:NumericAxisY.Label>
+            </dxc:NumericAxisY>
+        </dxc:ChartView.AxisY>
+
+        <dxc:ChartView.Series>
+            <!-- График баров -->
+            <dxc:StockSeries DisplayName="Цена">
+                <dxc:StockSeries.Data>
+                    <dxc:SeriesDataAdapter DataSource="{Binding CandleData}" ArgumentDataMember="Date">
+                        <dxc:ValueDataMember Type="Open" Member="Open"/>
+                        <dxc:ValueDataMember Type="High" Member="High"/>
+                        <dxc:ValueDataMember Type="Low" Member="Low"/>
+                        <dxc:ValueDataMember Type="Close" Member="Close"/>
+                    </dxc:SeriesDataAdapter>
+                </dxc:StockSeries.Data>
+                
+                <dxc:StockSeries.Style>
+                    <dxc:CandleStickSeriesStyle RisingFill="Green" FallingFill="Red"/>
+                </dxc:StockSeries.Style>
+
+                <dxc:StockSeries.HintOptions>
+                    <dxc:SeriesHintOptions 
+                            PointTextPattern="{}{S}&#10;High: ${H$###.##}&#10;Open: ${O$###.##}&#10;Low: ${L$###.##}&#10;Close: ${C$###.##}"/>
+                </dxc:StockSeries.HintOptions>
+            </dxc:StockSeries>
+
+            <dxc:WilliamsRIndicator DisplayName="WPR(5)"
+                                PointsCount="5">
+                <dxc:WilliamsRIndicator.Data>
+                    <dxc:CalculatedSeriesDataAdapter Series="{Binding Series[0], Source={x:Reference chartView}}"/>
+                </dxc:WilliamsRIndicator.Data>
+                <dxc:WilliamsRIndicator.AxisY>
+                    <dxc:NumericAxisY AlwaysShowZeroLevel="False" GridAlignment="30">
+                        <dxc:NumericAxisY.Range>
+                            <dxc:NumericRange Min="-100" Max="0"/>
+                        </dxc:NumericAxisY.Range>
+                        <dxc:NumericAxisY.Layout>
+                            <dxc:AxisLayout Anchor1="0" Anchor2="0.3"/>
+                        </dxc:NumericAxisY.Layout>
+                    </dxc:NumericAxisY>
+                </dxc:WilliamsRIndicator.AxisY>
+            </dxc:WilliamsRIndicator>
+
+            <!-- WPR(5) на вторичной оси -->
+            <!--<dxc:LineSeries DisplayName="WPR(5)" AxisY="SecondaryAxisY">
+                <dxc:LineSeries.Data>
+                    <dxc:SeriesDataAdapter DataSource="{Binding Wpr5Data}" ArgumentDataMember="Date">
+                        <dxc:ValueDataMember Type="Value" Member="Value"/>
+                    </dxc:SeriesDataAdapter>
+                </dxc:LineSeries.Data>
+                <dxc:LineSeries.Style>
+                    <dxc:LineSeriesStyle Stroke="#FF9800" StrokeThickness="2"/>
+                </dxc:LineSeries.Style>
+            </dxc:LineSeries>
+
+            --><!-- WPR(21) на вторичной оси --><!--
+            <dxc:LineSeries DisplayName="WPR(21)" AxisY="SecondaryAxisY">
+                <dxc:LineSeries.Data>
+                    <dxc:SeriesDataAdapter DataSource="{Binding Wpr21Data}" ArgumentDataMember="Date">
+                        <dxc:ValueDataMember Type="Value" Member="Value"/>
+                    </dxc:SeriesDataAdapter>
+                </dxc:LineSeries.Data>
+                <dxc:LineSeries.Style>
+                    <dxc:LineSeriesStyle Stroke="#2196F3" StrokeThickness="2"/>
+                </dxc:LineSeries.Style>
+            </dxc:LineSeries>-->
+        </dxc:ChartView.Series>
+        
+        
+
+         <!--Вторичная ось Y для WPR--> 
+        <!--<dxc:ChartView.AxisY>
+            <dxc:NumericAxisY AutoRangeMode="VisibleValues" RangeMin="-100" RangeMax="0">
+                <dxc:NumericAxisY.Label>
+                    <dxc:AxisLabel TextFormat="F0"/>
+                </dxc:NumericAxisY.Label>
+            </dxc:NumericAxisY>
+        </dxc:ChartView.AxisY>-->
+
+        <!-- Поведения -->
+        <!--<dxc:ChartView.Behaviors>
+            <dxc:ChartView.Behaviors.SeriesPointTooltipBehavior PointTextPattern="O:{Open:F2} H:{High:F2} L:{Low:F2} C:{Close:F2}"/>
+            <dxc:ChartView.Behaviors.ChartZoomPanBehavior EnableZooming="True" EnablePanning="True"/>
+        </dxc:ChartView.Behaviors>-->
     </dxc:ChartView>
 
 </ContentPage>

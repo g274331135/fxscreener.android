@@ -7,6 +7,9 @@ namespace fxscreener.android.ViewModels;
 
 public class ChartViewModel : BindableObject
 {
+    public DateTime RangeStart { get; set; }
+    public DateTime RangeEnd { get; set; }
+
     private ObservableCollection<CandleData> _candleData = new();
     public ObservableCollection<CandleData> CandleData
     {
@@ -70,6 +73,9 @@ public class ChartViewModel : BindableObject
             CandleData = candles;
             Wpr5Data = wpr5;
             Wpr21Data = wpr21;
+
+            RangeStart = candles[0].Date;
+            RangeEnd = candles[20].Date;
         }
         finally
         {
