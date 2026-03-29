@@ -290,7 +290,7 @@ public class ScannerViewModel : BindableObject
         List<string> symbols,
         int timeframeMinutes)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now.AddHours(3);//.UtcNow;
         var barsNeeded = 50;
         var attempts = 0;
 

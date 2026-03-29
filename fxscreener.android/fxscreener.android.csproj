@@ -64,9 +64,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="DevExpress.Maui.Charts" Version="25.1.9" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.8" />
-		<PackageReference Include="SkiaSharp.Views.Maui.Controls" Version="3.119.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="DevExpress.ExpressApp.Chart.v21.2">
+	    <HintPath>C:\Program Files (x86)\DevExpress 21.2\Components\Bin\Framework\DevExpress.ExpressApp.Chart.v21.2.dll</HintPath>
+	  </Reference>
 	</ItemGroup>
 
 	<ItemGroup>

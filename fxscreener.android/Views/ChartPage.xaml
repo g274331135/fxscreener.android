@@ -1,58 +1,38 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
+             xmlns:dxc="clr-namespace:DevExpress.Maui.Charts;assembly=DevExpress.Maui.Charts"
+             xmlns:local="clr-namespace:fxscreener.android"
              x:Class="fxscreener.android.Views.ChartPage"
              Title="График">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <dxc:ChartView>
+        <dxc:ChartView.Series>
+            <dxc:CandleStickSeries>
+                
+                <dxc:CandleStickSeries.HintOptions>
+                    <dxc:SeriesCrosshairOptions PointTextPattern="High: ${H$###.##}&#10;Open: ${O$###.##}&#10;Low: ${L$###.##}&#10;Close: ${C$###.##}"/>
+                </dxc:CandleStickSeries.HintOptions>
+                
+                <dxc:CandleStickSeries.Data>
+                    <dxc:SeriesDataAdapter DataSource="{Binding CandleData}" ArgumentDataMember="Date">
+                        <dxc:ValueDataMember Type="High" Member="High" />
+                        <dxc:ValueDataMember Type="Low" Member="Low" />
+                        <dxc:ValueDataMember Type="Open" Member="Open" />
+                        <dxc:ValueDataMember Type="Close" Member="Close" />
+                    </dxc:SeriesDataAdapter>
+                </dxc:CandleStickSeries.Data>
+                
+            </dxc:CandleStickSeries>
+        </dxc:ChartView.Series>
 
-        <!-- Верхняя панель -->
-        <Grid Grid.Row="0" BackgroundColor="{DynamicResource Primary}" HeightRequest="50">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!--<dxc:ChartView.Hint>
+            <dxc:Hint>
+                <dxc:Hint.Behavior>
+                    <dxc:CrosshairHintBehavior GroupHeaderTextPattern="*}" />
+                </dxc:Hint.Behavior>
+            </dxc:Hint>
+        </dxc:ChartView.Hint>-->
+    </dxc:ChartView>
 
-            <ImageButton Grid.Column="0"
-                         BackgroundColor="Transparent"
-                         WidthRequest="40"
-                         HeightRequest="40"
-                         HorizontalOptions="Start"
-                         Command="{Binding CloseCommand}">
-                <ImageButton.Source>
-                    <FontImageSource FontFamily="MaterialIcons"
-                                     Glyph="&#xe5c4;"
-                                     Color="White"
-                                     Size="24"/>
-                </ImageButton.Source>
-            </ImageButton>
-
-            <Label Grid.Column="1"
-                   Text="{Binding Title}"
-                   TextColor="White"
-                   FontSize="18"
-                   FontAttributes="Bold"
-                   VerticalOptions="Center"
-                   HorizontalOptions="Start"/>
-        </Grid>
-
-        <!-- Canvas для графика -->
-        <skia:SKCanvasView Grid.Row="1"
-                           x:Name="canvasView"
-                           PaintSurface="OnCanvasPaintSurface"
-                           EnableTouchEvents="True"
-                           Touch="OnCanvasTouch"/>
-
-        <!-- Индикатор загрузки -->
-        <ActivityIndicator Grid.Row="1"
-                           IsRunning="{Binding IsLoading}"
-                           IsVisible="{Binding IsLoading}"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"/>
-    </Grid>
 </ContentPage>

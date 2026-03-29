@@ -4,7 +4,7 @@ using fxscreener.android.Services;
 using fxscreener.android.ViewModels;
 using fxscreener.android.Views;
 using Microsoft.Extensions.Logging;
-using SkiaSharp.Views.Maui.Controls.Hosting;
+using DevExpress.Maui;
 
 namespace fxscreener.android;
 
@@ -15,7 +15,8 @@ public static class MauiProgram
         var builder = MauiApp.CreateBuilder();
         builder
             .UseMauiApp<App>()
-            .UseSkiaSharp()
+            .UseDevExpress()
+            .UseDevExpressCharts()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -25,7 +26,7 @@ public static class MauiProgram
 
         builder.Services.AddSingleton<INavigation>(sp =>
         {
-            return Application.Current?.MainPage?.Navigation ?? throw new InvalidOperationException("Navigation not available");
+            return Shell.Current?.Navigation ?? throw new InvalidOperationException("Navigation not available");
         });
 
         // Сервисы
