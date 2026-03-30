@@ -12,8 +12,6 @@ public class ScannerViewModel : BindableObject
     private readonly IMt5ApiService _apiService;
     private readonly IIndicatorCalculator _indicatorCalculator;
     private readonly ITimeAggregationService _timeAggregationService;
-    private readonly IBuildingService _buildingService;
-    private readonly BuildSettings _buildSettings;
     private readonly InstrumentsStorage _storage;
 
     private Timer? _updateTimer;
@@ -34,15 +32,11 @@ public class ScannerViewModel : BindableObject
     public ScannerViewModel(
         IMt5ApiService apiService,
         IIndicatorCalculator indicatorCalculator,
-        ITimeAggregationService timeAggregationService,
-        IBuildingService buildingService,
-        BuildSettings buildSettings)
+        ITimeAggregationService timeAggregationService)
     {
         _apiService = apiService;
         _indicatorCalculator = indicatorCalculator;
         _timeAggregationService = timeAggregationService;
-        _buildingService = buildingService;
-        _buildSettings = buildSettings;
 
         // Загружаем сохранённые инструменты
         Task.Run(LoadInstrumentsAsync);
@@ -216,55 +210,11 @@ public class ScannerViewModel : BindableObject
                     var wpr5Values = _indicatorCalculator.GetWprValues(reversedBars, 5);
                     var wpr21Values = _indicatorCalculator.GetWprValues(reversedBars, 21);
 
-                    var cacheKey = $"{instrument.Symbol}_{instrument.Period}";
-                    _chartDataCache[cacheKey] = (bars, wpr5Values, wpr21Values);
-
                     // Рассчитываем индикаторы для грида
                     var result = _indicatorCalculator.CalculateForInstrument(
                         instrument.Symbol, period, reversedBars);
 
                     allResults.Add(result);
-                }
-            }
-
-            // 2. Обрабатываем достройку для инструментов, у которых осталось < BuildTimeMinutes
-            foreach (var instrument in allInstruments)
-            {
-                var timeframeMinutes = Mt5ApiService.ConvertPeriodToMinutes(instrument.Period);
-                var cacheKey = $"{instrument.Symbol}_{instrument.Period}";
-
-                if (_historyCache.TryGetValue(cacheKey, out var historyBars) && historyBars.Count > 0)
-                {
-                    var lastClosedBar = historyBars.First(); // bars[0] — последний закрытый бар
-                    var shouldBuild = _buildingService.ShouldBuild(nowLocal, lastClosedBar.Time, timeframeMinutes);
-
-                    if (shouldBuild)
-                    {
-                        // Достраиваем текущий бар
-                        var currentBar = await _buildingService.BuildCurrentBarAsync(
-                            instrument.Symbol,
-                            lastClosedBar.Time,
-                            timeframeMinutes);
-
-                        if (currentBar != null && currentBar.Open != 0)
-                        {
-                            // Создаём копию списка баров с текущим баром на первом месте
-                            var barsWithCurrent = new List<Bar> { currentBar };
-                            barsWithCurrent.AddRange(historyBars);
-
-                            // Пересчитываем индикаторы с учётом текущего бара
-                            var result = _indicatorCalculator.CalculateForInstrument(
-                                instrument.Symbol, instrument.Period, barsWithCurrent);
-
-                            // Обновляем результат в allResults (заменяем)
-                            var existing = allResults.FirstOrDefault(r => r.Name == instrument.Symbol && r.Period == instrument.Period);
-                            if (existing != null)
-                            {
-                                allResults.Remove(existing);
-                                allResults.Add(result);
-                            }
-                        }
-                    }
                 }
             }
 
@@ -299,7 +249,7 @@ public class ScannerViewModel : BindableObject
         // Начальный период: от now - (timeframeMinutes * barsNeeded)
         var from = now.AddMinutes(-timeframeMinutes * barsNeeded);
 
-        while (attempts < _buildSettings.MaxHistoryAttempts)
+        while (attempts < 3)
         {
             var response = await _apiService.GetPriceHistoryManyAsync(
                 symbols,

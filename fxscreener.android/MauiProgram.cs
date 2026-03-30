@@ -1,5 +1,4 @@
-﻿using fxscreender.android.Services;
-using fxscreener.android.Models;
+﻿using fxscreener.android.Models;
 using fxscreener.android.Services;
 using fxscreener.android.ViewModels;
 using fxscreener.android.Views;
@@ -32,10 +31,6 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMt5ApiService, Mt5ApiService>();
         builder.Services.AddSingleton<IIndicatorCalculator, IndicatorCalculator>();
         builder.Services.AddSingleton<ITimeAggregationService, TimeAggregationService>();
-        builder.Services.AddSingleton<BuildSettings>(BuildSettings.LoadSynchronous());
-        builder.Services.AddSingleton<IM1CacheService, M1CacheService>();
-        builder.Services.AddSingleton<IBarBuilderService, BarBuilderService>();
-        builder.Services.AddSingleton<IBuildingService, BuildingService>();
 
         // ViewModels
         builder.Services.AddSingleton<ChartViewModel>();
