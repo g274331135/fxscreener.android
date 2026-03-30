@@ -1,31 +1,15 @@
-﻿using System.Collections.ObjectModel;
-using System.Windows.Input;
+﻿using System.Windows.Input;
 using fxscreener.android.Models;
-using DevExpress.Maui.Charts;
 
 namespace fxscreener.android.ViewModels;
 
 public class ChartViewModel : BindableObject
 {
-    private ObservableCollection<CandleData> _candleData = new();
-    public ObservableCollection<CandleData> CandleData
+    private ChartData _chartData = new();
+    public ChartData ChartData
     {
-        get => _candleData;
-        set { _candleData = value; OnPropertyChanged(); }
-    }
-
-    private ObservableCollection<IndicatorData> _wpr5Data = new();
-    public ObservableCollection<IndicatorData> Wpr5Data
-    {
-        get => _wpr5Data;
-        set { _wpr5Data = value; OnPropertyChanged(); }
-    }
-
-    private ObservableCollection<IndicatorData> _wpr21Data = new();
-    public ObservableCollection<IndicatorData> Wpr21Data
-    {
-        get => _wpr21Data;
-        set { _wpr21Data = value; OnPropertyChanged(); }
+        get => _chartData;
+        set { _chartData = value; OnPropertyChanged(); }
     }
 
     private bool _isLoading;
@@ -44,37 +28,52 @@ public class ChartViewModel : BindableObject
 
     public async Task LoadData(string symbol, string period, List<Bar> bars, List<double> wpr5Values, List<double> wpr21Values)
     {
+        System.Diagnostics.Debug.WriteLine($"LoadData called on ViewModel hash: {this.GetHashCode()}");
+
         IsLoading = true;
 
         try
         {
-            var candles = new ObservableCollection<CandleData>();
-            var wpr5 = new ObservableCollection<IndicatorData>();
-            var wpr21 = new ObservableCollection<IndicatorData>();
-
+            // Здесь преобразуем полученные бары и индикаторы в ChartData
+            // Для WPR нужно создать список Bar-подобных объектов (можно просто хранить значения)
+            // Упростим: создадим список с временем и значением
+            var wpr5Bars = new List<Bar>();
+            var wpr21Bars = new List<Bar>();
             for (int i = 0; i < bars.Count; i++)
             {
-                candles.Add(new CandleData
+                wpr5Bars.Add(new Bar
                 {
-                    Date = bars[i].Time,
-                    Open = bars[i].Open,
-                    High = bars[i].High,
-                    Low = bars[i].Low,
-                    Close = bars[i].Close
+                    Time = bars[i].Time,
+                    Close = wpr5Values[i],
+                    Open = wpr5Values[i],
+                    High = wpr5Values[i],
+                    Low = wpr5Values[i]
                 });
-
-                wpr5.Add(new IndicatorData { Date = bars[i].Time, Value = wpr5Values[i] });
-                wpr21.Add(new IndicatorData { Date = bars[i].Time, Value = wpr21Values[i] });
+                wpr21Bars.Add(new Bar
+                {
+                    Time = bars[i].Time,
+                    Close = wpr21Values[i],
+                    Open = wpr21Values[i],
+                    High = wpr21Values[i],
+                    Low = wpr21Values[i]
+                });
             }
 
-            CandleData = candles;
-            Wpr5Data = wpr5;
-            Wpr21Data = wpr21;
+            ChartData = new ChartData
+            {
+                Bars = bars,
+                Wpr5 = wpr5Bars,
+                Wpr21 = wpr21Bars,
+                VisibleStartIndex = 0,
+                VisibleEndIndex = Math.Min(bars.Count - 1, 49)
+            };
         }
         finally
         {
             IsLoading = false;
         }
+
+        System.Diagnostics.Debug.WriteLine($"ChartData assigned: Bars={ChartData.Bars.Count}, Wpr5={ChartData.Wpr5.Count}, Wpr21={ChartData.Wpr21.Count}");
     }
 
     private async Task Close()

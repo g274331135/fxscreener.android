@@ -18,4 +18,10 @@ public partial class InstrumentsPage : ContentPage
     {
         await _shell.SafeGoToAsync(".."); // или "//scanner"
     }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        await _viewModel.OnAppearing();
+    }
 }
