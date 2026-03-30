@@ -201,7 +201,7 @@ public class ScannerViewModel : BindableObject
                     // Конвертируем бары
                     var bars = itemForSymbol.Bars.Select(b => new Bar
                     {
-                        Time = b.Time.AddHours(_utcOffset),
+                        Time = b.Time,
                         Open = b.OpenPrice,
                         High = b.HighPrice,
                         Low = b.LowPrice,
@@ -210,16 +210,18 @@ public class ScannerViewModel : BindableObject
                         Ticks = (int)b.TickVolume
                     }).ToList();
 
+                    var reversedBars = bars.Reverse<Bar>().ToList();
+
                     // получаем WPR значения и сохраняем в кэш
-                    var wpr5Values = _indicatorCalculator.GetWprValues(bars, 5);
-                    var wpr21Values = _indicatorCalculator.GetWprValues(bars, 21);
+                    var wpr5Values = _indicatorCalculator.GetWprValues(reversedBars, 5);
+                    var wpr21Values = _indicatorCalculator.GetWprValues(reversedBars, 21);
 
                     var cacheKey = $"{instrument.Symbol}_{instrument.Period}";
                     _chartDataCache[cacheKey] = (bars, wpr5Values, wpr21Values);
 
                     // Рассчитываем индикаторы для грида
                     var result = _indicatorCalculator.CalculateForInstrument(
-                        instrument.Symbol, period, bars);
+                        instrument.Symbol, period, reversedBars);
 
                     allResults.Add(result);
                 }
@@ -290,7 +292,7 @@ public class ScannerViewModel : BindableObject
         List<string> symbols,
         int timeframeMinutes)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now.AddHours(3);
         var barsNeeded = 50;
         var attempts = 0;
 
