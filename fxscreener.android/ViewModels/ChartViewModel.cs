@@ -1,5 +1,5 @@
-﻿using System.Windows.Input;
-using fxscreener.android.Models;
+﻿using fxscreener.android.Models;
+using System.Windows.Input;
 
 namespace fxscreener.android.ViewModels;
 
@@ -19,6 +19,33 @@ public class ChartViewModel : BindableObject
         set { _isLoading = value; OnPropertyChanged(); }
     }
 
+    private string _instrumentName = string.Empty;
+    public string InstrumentName
+    {
+        get => _instrumentName;
+        set
+        {
+            _instrumentName = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Title)); // обновляем Title
+        }
+    }
+
+    private string _period = string.Empty;
+    public string Period
+    {
+        get => _period;
+        set
+        {
+            _period = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Title)); // обновляем Title
+        }
+    }
+
+    // Составной заголовок для отображения
+    public string Title => $"{InstrumentName} {Period}";
+
     public ICommand CloseCommand { get; }
 
     public ChartViewModel()
@@ -34,6 +61,9 @@ public class ChartViewModel : BindableObject
 
         try
         {
+            InstrumentName = symbol;
+            Period = period;
+
             // Здесь преобразуем полученные бары и индикаторы в ChartData
             // Для WPR нужно создать список Bar-подобных объектов (можно просто хранить значения)
             // Упростим: создадим список с временем и значением

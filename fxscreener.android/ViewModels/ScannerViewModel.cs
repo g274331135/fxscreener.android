@@ -194,7 +194,17 @@ public class ScannerViewModel : BindableObject
 
                 var reversedBars = bars.Reverse<Bar>().ToList();
 
+                var lastBar = reversedBars[0];
+                var timeframeMinutes = Mt5ApiService.ConvertPeriodToMinutes(instrument.Period);
+                var currentTime = DateTime.UtcNow.AddHours(_utcOffset);
 
+                if (!IsBarClosed(lastBar, timeframeMinutes, currentTime))
+                {
+                    // Удаляем незакрытый бар
+                    reversedBars.RemoveAt(0);
+                    bars.RemoveAt(bars.Count - 1);
+                    //System.Diagnostics.Debug.WriteLine($"[Scanner] Removed unclosed bar for {item.Symbol} at {lastBar.Time}");
+                }
 
                 // Получаем WPR значения для графика
                 var wpr5Values = _indicatorCalculator.GetWprValues(reversedBars, 5);
@@ -225,6 +235,23 @@ public class ScannerViewModel : BindableObject
         {
             IsLoading = false;
         }
+    }
+
+    /// <summary>
+    /// Проверяет, является ли бар полностью закрытым
+    /// </summary>
+    /// <param name="bar">Бар для проверки</param>
+    /// <param name="timeframeMinutes">Таймфрейм в минутах</param>
+    /// <param name="currentTime">Текущее время</param>
+    /// <returns>True если бар закрыт, иначе False</returns>
+    private bool IsBarClosed(Bar bar, int timeframeMinutes, DateTime currentTime)
+    {
+        // Время начала следующего бара = время текущего бара + таймфрейм
+        var nextBarStartTime = bar.Time.AddMinutes(timeframeMinutes);
+
+        // Если время начала следующего бара больше чем текущее время + 5 минут,
+        // значит текущий бар ещё не закрыт
+        return nextBarStartTime <= currentTime.AddMinutes(5);
     }
 
     #endregion

@@ -1,29 +1,40 @@
 using fxscreener.android.ViewModels;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using SkiaSharp.Views.Maui.Controls;
 using System.Diagnostics;
 
 namespace fxscreener.android.Views;
 
 public partial class ChartPage : ContentPage
 {
-    private readonly AppShell _shell;
-    private ChartViewModel _viewModel;
-    private ChartRenderer _renderer;
+    private readonly ChartViewModel _viewModel;
+    private ChartRenderer? _renderer;
+    private SKCanvasView? _canvasView;
 
     public ChartPage(ChartViewModel viewModel)
     {
         InitializeComponent();
         BindingContext = viewModel;
         _viewModel = viewModel;
-        _shell = AppShell.Current ?? throw new InvalidOperationException("AppShell not available");
-        _renderer = new ChartRenderer();
 
-        System.Diagnostics.Debug.WriteLine($"ChartPage created with ViewModel hash: {viewModel.GetHashCode()}");
+        // Создаём CanvasView программно
+        _canvasView = new SKCanvasView();
+        _canvasView.PaintSurface += OnCanvasPaintSurface;
+        _canvasView.EnableTouchEvents = true;
+        _canvasView.Touch += OnCanvasTouch;
+
+        // Добавляем в контейнер
+        ChartContainer.Content = _canvasView;
+
+        // Инициализируем рендерер
+        _renderer = new ChartRenderer();
     }
 
     private void OnCanvasPaintSurface(object sender, SKPaintSurfaceEventArgs e)
     {
+        if (_renderer == null || _canvasView == null) return;
+
         var canvas = e.Surface.Canvas;
         canvas.Clear(SKColors.White);
 
@@ -39,29 +50,27 @@ public partial class ChartPage : ContentPage
 
     private void OnCanvasTouch(object sender, SKTouchEventArgs e)
     {
+        if (_renderer == null || _canvasView == null || _viewModel.ChartData == null) return;
+
+        // Обработка касаний для выбора бара
         if (e.ActionType == SKTouchAction.Pressed)
         {
             var location = e.Location;
-            var index = _renderer.GetBarIndexAtPoint(location, _viewModel.ChartData, (float)canvasView.CanvasSize.Width);
+            var index = _renderer.GetBarIndexAtPoint(location, _viewModel.ChartData, (float)_canvasView.CanvasSize.Width);
             if (index >= 0 && index < _viewModel.ChartData.Bars.Count)
             {
                 _viewModel.ChartData.SelectedIndex = index;
-                canvasView.InvalidateSurface();
+                _canvasView.InvalidateSurface(); // перерисовать
             }
             e.Handled = true;
         }
     }
 
-    // Если есть кнопка назад
-    private async void OnBackButtonClicked(object sender, EventArgs e)
+    protected override void OnAppearing()
     {
-        await _shell.SafeGoToAsync("..");
-    }
+        base.OnAppearing();
 
-    // Также можно переопределить аппаратную кнопку назад
-    protected override bool OnBackButtonPressed()
-    {
-        _ = _shell.SafeGoToAsync("..");
-        return true;
+        // Устанавливаем заголовок страницы
+        Title = _viewModel.Title;
     }
 }
