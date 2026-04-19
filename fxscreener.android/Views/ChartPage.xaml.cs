@@ -39,19 +39,17 @@ public partial class ChartPage : ContentPage
 
     private void OnCanvasTouch(object sender, SKTouchEventArgs e)
     {
-        // Обработка касаний для выбора бара
         if (e.ActionType == SKTouchAction.Pressed)
         {
             var location = e.Location;
-            var index = _renderer.GetBarIndexAtPoint(location, _viewModel.ChartData, canvasView.CanvasSize.Width);
+            var index = _renderer.GetBarIndexAtPoint(location, _viewModel.ChartData, (float)canvasView.CanvasSize.Width);
             if (index >= 0 && index < _viewModel.ChartData.Bars.Count)
             {
                 _viewModel.ChartData.SelectedIndex = index;
-                canvasView.InvalidateSurface(); // перерисовать
+                canvasView.InvalidateSurface();
             }
             e.Handled = true;
         }
-        // Для масштабирования и скролла добавим позже
     }
 
     // Если есть кнопка назад

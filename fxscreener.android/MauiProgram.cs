@@ -31,6 +31,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IMt5ApiService, Mt5ApiService>();
         builder.Services.AddSingleton<IIndicatorCalculator, IndicatorCalculator>();
         builder.Services.AddSingleton<ITimeAggregationService, TimeAggregationService>();
+        builder.Services.AddSingleton<IParallelLoaderService, ParallelLoaderService>();
 
         // ViewModels
         builder.Services.AddSingleton<ChartViewModel>();

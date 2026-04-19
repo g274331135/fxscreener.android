@@ -51,6 +51,7 @@ public partial class ScannerPage : ContentPage
             var (bars, wpr5, wpr21) = chartData.Value;
 
             var chartVM = _serviceProvider.GetRequiredService<ChartViewModel>();
+            //bars.Reverse();
             await chartVM.LoadData(instrument.Symbol, instrument.Period, bars, wpr5, wpr21);
             await _shell.SafeGoToAsync("chart");
         }

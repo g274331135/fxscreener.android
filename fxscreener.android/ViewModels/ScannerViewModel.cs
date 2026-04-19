@@ -12,6 +12,8 @@ public class ScannerViewModel : BindableObject
     private readonly IMt5ApiService _apiService;
     private readonly IIndicatorCalculator _indicatorCalculator;
     private readonly ITimeAggregationService _timeAggregationService;
+    private readonly IParallelLoaderService _parallelLoader;
+
     private readonly InstrumentsStorage _storage;
 
     private Timer? _updateTimer;
@@ -32,11 +34,13 @@ public class ScannerViewModel : BindableObject
     public ScannerViewModel(
         IMt5ApiService apiService,
         IIndicatorCalculator indicatorCalculator,
-        ITimeAggregationService timeAggregationService)
+        ITimeAggregationService timeAggregationService,
+        IParallelLoaderService parallelLoader)
     {
         _apiService = apiService;
         _indicatorCalculator = indicatorCalculator;
         _timeAggregationService = timeAggregationService;
+        _parallelLoader = parallelLoader;
 
         // Загружаем сохранённые инструменты
         Task.Run(LoadInstrumentsAsync);
@@ -146,7 +150,6 @@ public class ScannerViewModel : BindableObject
 
         try
         {
-            // Загружаем актуальный список инструментов
             var storage = await InstrumentsStorage.LoadAsync();
             var allInstruments = storage.GetAllInstruments();
 
@@ -157,72 +160,61 @@ public class ScannerViewModel : BindableObject
                 return;
             }
 
-            StatusMessage = "Обновление данных...";
+            StatusMessage = "Обновление данных (параллельная загрузка)...";
 
-            // Группируем по периодам для массовой загрузки истории
-            var groups = allInstruments
-                .GroupBy(x => x.Period)
-                .ToList();
+            // 🔥 ПАРАЛЛЕЛЬНАЯ ЗАГРУЗКА — возвращает словарь
+            var barsDictionary = await _parallelLoader.LoadHistoryParallelAsync(
+                allInstruments,
+                maxParallelism: 5);
+
+            if (barsDictionary == null || barsDictionary.Count == 0)
+            {
+                StatusMessage = "Не удалось загрузить данные";
+                return;
+            }
 
             var allResults = new List<InstrumentScanResult>();
-            var nowUtc = DateTime.UtcNow;
-            var nowLocal = nowUtc.AddHours(_utcOffset);
 
-            // 1. Загружаем историю для всех групп (50 баров)
-            foreach (var group in groups)
+            // Обрабатываем каждый инструмент
+            foreach (var instrument in allInstruments)
             {
-                var period = group.Key;
-                var instrumentsInGroup = group.ToList();
-                var symbols = instrumentsInGroup.Select(x => x.Symbol).ToList();
-                var timeframeMinutes = Mt5ApiService.ConvertPeriodToMinutes(period);
+                var key = $"{instrument.Symbol}_{instrument.Period}";
 
-                // Загружаем историю с расширением периода
-                var historyItems = await LoadHistoryWithExpansionAsync(symbols, timeframeMinutes);
-
-                if (historyItems == null || historyItems.Count == 0)
+                if (!barsDictionary.TryGetValue(key, out var bars))
                 {
-                    System.Diagnostics.Debug.WriteLine($"No history data for {period}");
+                    System.Diagnostics.Debug.WriteLine($"[Update] No data for {key}");
                     continue;
                 }
 
-                // Для каждого инструмента в группе находим его бары и рассчитываем индикаторы
-                foreach (var instrument in instrumentsInGroup)
+                if (bars.Count < 21)
                 {
-                    var itemForSymbol = historyItems.FirstOrDefault(h => h.Symbol == instrument.Symbol);
-                    if (itemForSymbol?.Bars == null || itemForSymbol.Bars.Count < 21)
-                        continue;
-
-                    // Конвертируем бары
-                    var bars = itemForSymbol.Bars.Select(b => new Bar
-                    {
-                        Time = b.Time,
-                        Open = b.OpenPrice,
-                        High = b.HighPrice,
-                        Low = b.LowPrice,
-                        Close = b.ClosePrice,
-                        Volume = b.Volume,
-                        Ticks = (int)b.TickVolume
-                    }).ToList();
-
-                    var reversedBars = bars.Reverse<Bar>().ToList();
-
-                    // получаем WPR значения и сохраняем в кэш
-                    var wpr5Values = _indicatorCalculator.GetWprValues(reversedBars, 5);
-                    var wpr21Values = _indicatorCalculator.GetWprValues(reversedBars, 21);
-
-                    // Рассчитываем индикаторы для грида
-                    var result = _indicatorCalculator.CalculateForInstrument(
-                        instrument.Symbol, period, reversedBars);
-
-                    allResults.Add(result);
+                    System.Diagnostics.Debug.WriteLine($"[Update] Not enough bars for {key}: {bars.Count}");
+                    continue;
                 }
+
+                var reversedBars = bars.Reverse<Bar>().ToList();
+
+
+
+                // Получаем WPR значения для графика
+                var wpr5Values = _indicatorCalculator.GetWprValues(reversedBars, 5);
+                var wpr21Values = _indicatorCalculator.GetWprValues(reversedBars, 21);
+
+                // Сохраняем в кэш для графика
+                _chartDataCache[key] = (bars, wpr5Values, wpr21Values);
+
+                // Рассчитываем индикаторы для грида
+                var result = _indicatorCalculator.CalculateForInstrument(
+                    instrument.Symbol, instrument.Period, reversedBars);
+
+                allResults.Add(result);
             }
 
-            // 3. Формируем DisplayRows
+            // Формируем DisplayRows
             BuildDisplayRows(allResults);
 
             LastUpdateTime = DateTime.Now;
-            StatusMessage = $"Обновлено: {allResults.Count} инструментов";
+            StatusMessage = $"Обновлено: {allResults.Count} инструментов (параллельно)";
         }
         catch (Exception ex)
         {
@@ -233,71 +225,6 @@ public class ScannerViewModel : BindableObject
         {
             IsLoading = false;
         }
-    }
-
-    /// <summary>
-    /// Загрузить исторические бары для списка символов с расширением периода до получения 50 баров
-    /// </summary>
-    private async Task<List<PriceHistoryItem>?> LoadHistoryWithExpansionAsync(
-        List<string> symbols,
-        int timeframeMinutes)
-    {
-        var now = DateTime.Now.AddHours(3);
-        var barsNeeded = 50;
-        var attempts = 0;
-
-        // Начальный период: от now - (timeframeMinutes * barsNeeded)
-        var from = now.AddMinutes(-timeframeMinutes * barsNeeded);
-
-        while (attempts < 3)
-        {
-            var response = await _apiService.GetPriceHistoryManyAsync(
-                symbols,
-                from,
-                now,
-                timeframeMinutes);
-
-            if (response != null && response.Count > 0)
-            {
-                // Проверяем, хватает ли баров для каждого символа
-                bool allHaveEnough = true;
-                foreach (var item in response)
-                {
-                    if (item.Bars == null || item.Bars.Count < barsNeeded)
-                    {
-                        allHaveEnough = false;
-                        break;
-                    }
-                }
-
-                if (allHaveEnough)
-                {
-                    // Берём последние 50 баров для каждого символа
-                    foreach (var item in response)
-                    {
-                        if (item.Bars != null && item.Bars.Count > barsNeeded)
-                        {
-                            item.Bars = item.Bars.TakeLast(barsNeeded).ToList();
-                        }
-                    }
-                    return response;
-                }
-            }
-
-            // Не хватило баров — расширяем период
-            attempts++;
-            from = from.AddMinutes(-timeframeMinutes * barsNeeded);
-            System.Diagnostics.Debug.WriteLine($"Expanding history: attempt {attempts}, new from={from}");
-        }
-
-        // После всех попыток возвращаем то, что есть
-        var finalResponse = await _apiService.GetPriceHistoryManyAsync(
-            symbols,
-            from,
-            now,
-            timeframeMinutes);
-
-        return finalResponse;
     }
 
     #endregion
@@ -316,8 +243,8 @@ public class ScannerViewModel : BindableObject
                 var pairColor = (toolIndex % 2 == 0) ? "White" : "#F8F8F8";
 
                 // W5e
-                var w5eColor = GetWprColor(result.W5e);
                 var w5eText = result.W5e?.BarNumber.ToString() ?? "";
+                var w5eColor = GetWprTextColor(result.W5e);
 
                 // UD5
                 var ud5Color = GetUdColor(result.UD5);
@@ -330,9 +257,8 @@ public class ScannerViewModel : BindableObject
                     C5 = result.C5,
                     F2 = result.F2,
                     WprDisplay = w5eText,
-                    WprBackgroundColor = w5eColor.Background,
-                    WprTextColor = w5eColor.Text,
-                    UdBackgroundColor = ud5Color,
+                    WprTextColor = w5eColor,           // цвет текста
+                    UdBackgroundColor = ud5Color,       // фон для UD
                     UdDisplay = ud5Display,
                     IsFirstRow = true,
                     IsSecondRow = false,
@@ -340,8 +266,8 @@ public class ScannerViewModel : BindableObject
                 });
 
                 // W21e
-                var w21eColor = GetWprColor(result.W21e);
                 var w21eText = result.W21e?.BarNumber.ToString() ?? "";
+                var w21eColor = GetWprTextColor(result.W21e);
 
                 // UD21
                 var ud21Color = GetUdColor(result.UD21);
@@ -354,9 +280,8 @@ public class ScannerViewModel : BindableObject
                     C5 = null,
                     F2 = null,
                     WprDisplay = w21eText,
-                    WprBackgroundColor = w21eColor.Background,
-                    WprTextColor = w21eColor.Text,
-                    UdBackgroundColor = ud21Color,
+                    WprTextColor = w21eColor,           // цвет текста
+                    UdBackgroundColor = ud21Color,       // фон для UD
                     UdDisplay = ud21Display,
                     IsFirstRow = false,
                     IsSecondRow = true,
@@ -375,17 +300,17 @@ public class ScannerViewModel : BindableObject
         });
     }
 
-    private (Color? Background, Color? Text) GetWprColor(WprSignal? signal)
+    private Color? GetWprTextColor(WprSignal? signal)
     {
-        if (signal == null) return (null, null);
+        if (signal == null) return Colors.Gray;
 
         return signal.SignalType switch
         {
-            WprSignalType.AboveMinus20 => (Color.FromArgb("#FFCCCC"), Color.FromArgb("#990000")),
-            WprSignalType.StrongAboveMinus5 => (Color.FromArgb("#FF6666"), Color.FromArgb("#CC0000")),
-            WprSignalType.BelowMinus80 => (Color.FromArgb("#CCFFCC"), Color.FromArgb("#006600")),
-            WprSignalType.StrongBelowMinus95 => (Color.FromArgb("#66CC66"), Color.FromArgb("#003300")),
-            _ => (null, null)
+            WprSignalType.AboveMinus20 => Color.FromArgb("#CC6600"),      // тёмно-оранжевый
+            WprSignalType.StrongAboveMinus5 => Color.FromArgb("#FF3300"), // ярко-красный
+            WprSignalType.BelowMinus80 => Color.FromArgb("#009933"),      // тёмно-зелёный
+            WprSignalType.StrongBelowMinus95 => Color.FromArgb("#00CC33"), // ярко-зелёный
+            _ => Colors.Gray
         };
     }
 

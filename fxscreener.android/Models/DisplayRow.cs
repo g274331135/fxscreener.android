@@ -14,7 +14,6 @@ public class DisplayRow
 
     // Данные для W5e (первая строка) и W21e (вторая строка)
     public string? WprDisplay { get; set; }      // Текст для отображения (номер бара)
-    public Color? WprBackgroundColor { get; set; }         // Цвет фона ячейки
     public Color? WprTextColor { get; set; }     // Цвет текста
 
     // Для UD5/UD21
