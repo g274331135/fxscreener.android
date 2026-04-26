@@ -9,19 +9,30 @@
         <converters:IntToStringConverter x:Key="IntToStringConverter" />
         <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
 
-        <!-- Стиль для ячеек грида -->
+        <!-- Стиль для всех ячеек грида -->
         <Style x:Key="GridCellLabel" TargetType="Label">
             <Setter Property="VerticalOptions" Value="Center"/>
             <Setter Property="HorizontalOptions" Value="Center"/>
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="LineBreakMode" Value="NoWrap"/>
+            <Setter Property="TextColor" Value="{DynamicResource TextColor}"/>
         </Style>
 
+        <!-- Стиль для заголовков -->
         <Style x:Key="GridHeaderLabel" TargetType="Label" BasedOn="{StaticResource GridCellLabel}">
             <Setter Property="FontAttributes" Value="Bold"/>
             <Setter Property="BackgroundColor" Value="{DynamicResource Primary}"/>
-            <Setter Property="TextColor" Value="White"/>
+            <Setter Property="TextColor" Value="{DynamicResource HeaderTextColor}"/>
             <Setter Property="Padding" Value="6,4"/>
+        </Style>
+
+        <!-- Стиль для фреймов UD ячеек -->
+        <Style x:Key="UdFrame" TargetType="Frame">
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="HasShadow" Value="False"/>
+            <Setter Property="HorizontalOptions" Value="Fill"/>
+            <Setter Property="VerticalOptions" Value="Fill"/>
         </Style>
     </ContentPage.Resources>
 
@@ -104,46 +115,79 @@
 
                 <!-- Шапка таблицы -->
                 <CollectionView.Header>
-                    <Grid Padding="0,2" 
+                    <Grid Padding="0,1" 
                           ColumnSpacing="1" 
                           RowSpacing="1"
-                          BackgroundColor="{DynamicResource Primary}">
+                          BackgroundColor="{Binding PairColor}">
+
+                        <!-- используем свойство PairColor -->
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="70"/>
-                            <!-- Name -->
                             <ColumnDefinition Width="50"/>
-                            <!-- Period -->
                             <ColumnDefinition Width="45"/>
-                            <!-- C5 -->
                             <ColumnDefinition Width="45"/>
-                            <!-- F2 -->
                             <ColumnDefinition Width="55"/>
-                            <!-- W5e / W21e -->
                             <ColumnDefinition Width="45"/>
-                            <!-- UD5 / UD21 -->
                         </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
 
-                        <!-- Первая строка заголовков -->
-                        <Label Grid.Row="0" Grid.Column="0" Text="Name" Style="{StaticResource GridHeaderLabel}"/>
-                        <Label Grid.Row="0" Grid.Column="1" Text="Per" Style="{StaticResource GridHeaderLabel}"/>
-                        <Label Grid.Row="0" Grid.Column="2" Text="C5" Style="{StaticResource GridHeaderLabel}"/>
-                        <Label Grid.Row="0" Grid.Column="3" Text="F2" Style="{StaticResource GridHeaderLabel}"/>
-                        <Label Grid.Row="0" Grid.Column="4" Text="W5e" Style="{StaticResource GridHeaderLabel}"/>
-                        <Label Grid.Row="0" Grid.Column="5" Text="UD5" Style="{StaticResource GridHeaderLabel}"/>
+                        <!-- Name -->
+                        <Label Grid.Column="0" 
+                               Text="{Binding Name}"
+                               IsVisible="{Binding IsFirstRow}"
+                               Style="{StaticResource GridCellLabel}"
+                               FontAttributes="Bold"
+                               TextColor="{DynamicResource TextColor}"/>
 
-                        <!-- Вторая строка заголовков -->
-                        <Label Grid.Row="1" Grid.Column="4" Text="W21e" Style="{StaticResource GridHeaderLabel}"/>
-                        <Label Grid.Row="1" Grid.Column="5" Text="UD21" Style="{StaticResource GridHeaderLabel}"/>
+                        <!-- Period -->
+                        <Label Grid.Column="1" 
+                               Text="{Binding Period}"
+                               IsVisible="{Binding IsFirstRow}"
+                               Style="{StaticResource GridCellLabel}"
+                               TextColor="{DynamicResource TextColor}"/>
 
-                        <!-- Пустые ячейки -->
-                        <BoxView Grid.Row="1" Grid.Column="0" BackgroundColor="Transparent"/>
-                        <BoxView Grid.Row="1" Grid.Column="1" BackgroundColor="Transparent"/>
-                        <BoxView Grid.Row="1" Grid.Column="2" BackgroundColor="Transparent"/>
-                        <BoxView Grid.Row="1" Grid.Column="3" BackgroundColor="Transparent"/>
+                        <!-- C5 -->
+                        <Label Grid.Column="2" 
+                               Text="{Binding C5}"
+                               IsVisible="{Binding IsFirstRow}"
+                               Style="{StaticResource GridCellLabel}"
+                               TextColor="{DynamicResource TextColor}"/>
+
+                        <!-- F2 -->
+                        <Label Grid.Column="3" 
+                               Text="{Binding F2}"
+                               IsVisible="{Binding IsFirstRow}"
+                               Style="{StaticResource GridCellLabel}"
+                               TextColor="{DynamicResource TextColor}"/>
+
+                        <!-- W5e/W21e -->
+                        <Label Grid.Column="4"
+                               Text="{Binding WprDisplay}"
+                               Style="{StaticResource GridCellLabel}"
+                               TextColor="{Binding WprTextColor}"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+
+                        <!-- UD5/UD21 -->
+                        <Frame Grid.Column="5"
+                               Padding="4,2"
+                               CornerRadius="4"
+                               HasShadow="False"
+                               BackgroundColor="Transparent"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Fill">
+                            <Label Text="{Binding UdDisplay}"
+                                   Style="{StaticResource GridCellLabel}"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"
+                                   TextColor="{DynamicResource TextColor}"/>
+                        </Frame>
+
+                        <!-- Пустые ячейки для второй строки -->
+                        <BoxView Grid.Column="0" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
+                        <BoxView Grid.Column="1" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
+                        <BoxView Grid.Column="2" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
+                        <BoxView Grid.Column="3" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
                     </Grid>
                 </CollectionView.Header>
 
@@ -154,9 +198,6 @@
                               ColumnSpacing="1" 
                               RowSpacing="1"
                               BackgroundColor="{Binding PairColor}">
-                            <Grid.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnInstrumentTapped" NumberOfTapsRequired="2"/>
-                            </Grid.GestureRecognizers>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70"/>
                                 <ColumnDefinition Width="50"/>
@@ -166,20 +207,27 @@
                                 <ColumnDefinition Width="45"/>
                             </Grid.ColumnDefinitions>
 
+                            <Grid.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnInstrumentTapped" NumberOfTapsRequired="2"/>
+                            </Grid.GestureRecognizers>
+
                             <!-- Первая строка пары -->
                             <Label Grid.Column="0" 
                                    Text="{Binding Name}"
                                    IsVisible="{Binding IsFirstRow}"
                                    Style="{StaticResource GridCellLabel}"
                                    FontAttributes="Bold"/>
+
                             <Label Grid.Column="1" 
                                    Text="{Binding Period}"
                                    IsVisible="{Binding IsFirstRow}"
                                    Style="{StaticResource GridCellLabel}"/>
+
                             <Label Grid.Column="2" 
                                    Text="{Binding C5}"
                                    IsVisible="{Binding IsFirstRow}"
                                    Style="{StaticResource GridCellLabel}"/>
+
                             <Label Grid.Column="3" 
                                    Text="{Binding F2}"
                                    IsVisible="{Binding IsFirstRow}"
@@ -192,32 +240,22 @@
                             <BoxView Grid.Column="3" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
 
                             <!-- W5e/W21e ячейка -->
-                            <Frame Grid.Column="4"
-                                   Padding="4,2"
-                                   CornerRadius="4"
-                                   HasShadow="False"
-                                   BackgroundColor="{Binding WprBackgroundColor}"
-                                   HorizontalOptions="Fill"
-                                   VerticalOptions="Fill">
-                                <Label Text="{Binding WprDisplay}"
-                                       Style="{StaticResource GridCellLabel}"
-                                       TextColor="{Binding WprTextColor}"
-                                       FontAttributes="Bold"
-                                       HorizontalOptions="Center"/>
-                            </Frame>
+                            <Label Grid.Column="4"
+                                   Text="{Binding WprDisplay}"
+                                   Style="{StaticResource GridCellLabel}"
+                                   TextColor="{Binding WprTextColor}"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"/>
 
                             <!-- UD5/UD21 ячейка -->
                             <Frame Grid.Column="5"
-                                   Padding="4,2"
-                                   CornerRadius="4"
-                                   HasShadow="False"
-                                   BackgroundColor="{Binding UdBackgroundColor}"
-                                   HorizontalOptions="Fill"
-                                   VerticalOptions="Fill">
+                                   Style="{StaticResource UdFrame}"
+                                   BackgroundColor="Transparent">
                                 <Label Text="{Binding UdDisplay}"
-                       Style="{StaticResource GridCellLabel}"
-                       FontAttributes="Bold"
-                       HorizontalOptions="Center"/>
+                                       Style="{StaticResource GridCellLabel}"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"/>
                             </Frame>
                         </Grid>
                     </DataTemplate>

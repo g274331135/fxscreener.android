@@ -25,8 +25,15 @@ public class DisplayRow
     public bool IsSecondRow { get; set; }
 
     // Цвет для пары строк (инструмента)
-    public string PairColor { get; set; } = "White";
-
-    // Для совместимости с существующим XAML
-    public string RowColor => PairColor;
+    // Вместо фиксированного цвета используем ключ ресурса
+    public string PairColorKey { get; set; } = "RowEvenColor";
+    // Возвращает цвет из ресурсов приложения в зависимости от темы
+    public Color PairColor
+    {
+        get
+        {
+            var color = Application.Current?.Resources[PairColorKey] as Color;
+            return color ?? Colors.White;
+        }
+    }
 }

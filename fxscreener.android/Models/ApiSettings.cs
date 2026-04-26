@@ -7,11 +7,11 @@ public class ApiSettings
 {
     private static readonly string SettingsFileName = "fxscreener_settings.json";
 
-    public string Login { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string Host { get; set; } = "mt5full2.mtapi.io";
+    public string Login { get; set; } = "524064";  // значение по умолчанию
+    public string Password { get; set; } = "!!]AYu77";  // значение по умолчанию
+    public string Host { get; set; } = "78.41.199.82";  // значение по умолчанию
     public int Port { get; set; } = 443;
-    public string ApiKey { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = "fcfdb4d7-fd85-44d6-ba14-f27983289490";  // значение по умолчанию
     public int UtcOffset { get; set; } = 3;
 
     /// <summary>
@@ -49,8 +49,11 @@ public class ApiSettings
 
             if (!File.Exists(filePath))
             {
-                System.Diagnostics.Debug.WriteLine("Settings file not found");
-                return null;
+                System.Diagnostics.Debug.WriteLine("Settings file not found, creating default settings");
+                // Создаём и сохраняем настройки по умолчанию
+                var defaultSettings = new ApiSettings();
+                await defaultSettings.SaveAsync();
+                return defaultSettings;
             }
 
             var json = await File.ReadAllTextAsync(filePath);
@@ -62,7 +65,8 @@ public class ApiSettings
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error loading settings: {ex.Message}");
-            return null;
+            // В случае ошибки возвращаем настройки по умолчанию
+            return new ApiSettings();
         }
     }
 

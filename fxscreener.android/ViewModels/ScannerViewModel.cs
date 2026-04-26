@@ -267,13 +267,12 @@ public class ScannerViewModel : BindableObject
 
             foreach (var result in allResults.OrderBy(r => r.Name))
             {
-                var pairColor = (toolIndex % 2 == 0) ? "White" : "#F8F8F8";
+                // Используем ключи динамических цветов
+                var pairColorKey = (toolIndex % 2 == 0) ? "RowEvenColor" : "RowOddColor";
 
                 // W5e
                 var w5eText = result.W5e?.BarNumber.ToString() ?? "";
                 var w5eColor = GetWprTextColor(result.W5e);
-
-                // UD5
                 var ud5Color = GetUdColor(result.UD5);
                 var ud5Display = GetUdDisplay(result.UD5);
 
@@ -284,19 +283,17 @@ public class ScannerViewModel : BindableObject
                     C5 = result.C5,
                     F2 = result.F2,
                     WprDisplay = w5eText,
-                    WprTextColor = w5eColor,           // цвет текста
-                    UdBackgroundColor = ud5Color,       // фон для UD
+                    WprTextColor = w5eColor,
+                    UdBackgroundColor = ud5Color,
                     UdDisplay = ud5Display,
                     IsFirstRow = true,
                     IsSecondRow = false,
-                    PairColor = pairColor
+                    PairColorKey = pairColorKey
                 });
 
                 // W21e
                 var w21eText = result.W21e?.BarNumber.ToString() ?? "";
                 var w21eColor = GetWprTextColor(result.W21e);
-
-                // UD21
                 var ud21Color = GetUdColor(result.UD21);
                 var ud21Display = GetUdDisplay(result.UD21);
 
@@ -307,12 +304,12 @@ public class ScannerViewModel : BindableObject
                     C5 = null,
                     F2 = null,
                     WprDisplay = w21eText,
-                    WprTextColor = w21eColor,           // цвет текста
-                    UdBackgroundColor = ud21Color,       // фон для UD
+                    WprTextColor = w21eColor,
+                    UdBackgroundColor = ud21Color,
                     UdDisplay = ud21Display,
                     IsFirstRow = false,
                     IsSecondRow = true,
-                    PairColor = pairColor
+                    PairColorKey = pairColorKey
                 });
 
                 toolIndex++;
@@ -333,10 +330,10 @@ public class ScannerViewModel : BindableObject
 
         return signal.SignalType switch
         {
-            WprSignalType.AboveMinus20 => Color.FromArgb("#CC6600"),      // тёмно-оранжевый
-            WprSignalType.StrongAboveMinus5 => Color.FromArgb("#FF3300"), // ярко-красный
-            WprSignalType.BelowMinus80 => Color.FromArgb("#009933"),      // тёмно-зелёный
-            WprSignalType.StrongBelowMinus95 => Color.FromArgb("#00CC33"), // ярко-зелёный
+            WprSignalType.AboveMinus20 => Color.FromArgb("#FFB74D"),   // светло-оранжевый
+            WprSignalType.StrongAboveMinus5 => Color.FromArgb("#FF5252"), // ярко-красный
+            WprSignalType.BelowMinus80 => Color.FromArgb("#81C784"),   // светло-зелёный
+            WprSignalType.StrongBelowMinus95 => Color.FromArgb("#4CAF50"), // зелёный
             _ => Colors.Gray
         };
     }

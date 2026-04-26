@@ -1,13 +1,35 @@
-﻿<?xml version = "1.0" encoding = "UTF-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:local="clr-namespace:fxscreener.android"
              x:Class="fxscreener.android.App">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
-                <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+                <!-- Светлая тема (по умолчанию) -->
+                <ResourceDictionary>
+                    <Color x:Key="Primary">#512BD4</Color>
+                    <Color x:Key="PrimaryDark">#3B1C8A</Color>
+                    <Color x:Key="Secondary">#2B0B98</Color>
+                    <Color x:Key="TextColor">#1A1C1E</Color>
+                    <Color x:Key="HeaderTextColor">#FFFFFF</Color>
+                    <Color x:Key="PageBackgroundColor">#F5F5F5</Color>
+                    <Color x:Key="RowEvenColor">#FFFFFF</Color>
+                    <Color x:Key="RowOddColor">#F8F8F8</Color>
+                    <Color x:Key="GridBorderColor">#E0E0E0</Color>
+                </ResourceDictionary>
+
+                <!-- Тёмная тема -->
+                <ResourceDictionary>
+                    <Color x:Key="Primary">#8A6EFF</Color>
+                    <Color x:Key="PrimaryDark">#6B4FD9</Color>
+                    <Color x:Key="Secondary">#B39DDB</Color>
+                    <Color x:Key="TextColor">#E0E0E0</Color>
+                    <Color x:Key="HeaderTextColor">#FFFFFF</Color>
+                    <Color x:Key="PageBackgroundColor">#121212</Color>
+                    <Color x:Key="RowEvenColor">#1E1E1E</Color>
+                    <Color x:Key="RowOddColor">#2D2D2D</Color>
+                    <Color x:Key="GridBorderColor">#404040</Color>
+                </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

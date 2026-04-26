@@ -8,6 +8,7 @@ public partial class App : Application
     private readonly IServiceProvider _serviceProvider;
     private readonly IMt5ApiService _apiService;
     private AppShell? _shell;
+    private bool _isInitialized = false;
 
     public App(IServiceProvider serviceProvider)
     {
@@ -18,11 +19,48 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        _shell = _serviceProvider.GetRequiredService<AppShell>();
+        if (_shell == null)
+        {
+            _shell = _serviceProvider.GetRequiredService<AppShell>();
+        }
 
-        Task.Run(async () => await InitializeAppAsync());
+        var window = new Window(_shell);
+        window.Activated += OnWindowActivated;
 
-        return new Window(_shell);
+        if (!_isInitialized)
+        {
+            _isInitialized = true;
+            Task.Run(async () => await InitializeAppAsync());
+        }
+
+        return window;
+    }
+
+    private void OnWindowActivated(object? sender, EventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine("Window activated");
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            try
+            {
+                if (_shell?.CurrentPage != null)
+                {
+                    // Восстанавливаем BindingContext
+                    var page = _shell.CurrentPage;
+                    var context = page.BindingContext;
+                    page.BindingContext = null;
+                    page.BindingContext = context;
+
+                    // Принудительная перерисовка
+                    page.ForceLayout();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"WindowActivated error: {ex.Message}");
+            }
+        });
     }
 
     private async Task InitializeAppAsync()
@@ -70,11 +108,22 @@ public partial class App : Application
 
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            // Обновляем текущую страницу
-            _shell?.CurrentPage?.ForceLayout();
+            try
+            {
+                // Обновляем текущую страницу
+                if (_shell?.CurrentPage != null)
+                {
+                    var page = _shell.CurrentPage;
+                    var context = page.BindingContext;
+                    page.BindingContext = null;
+                    page.BindingContext = context;
+                    page.ForceLayout();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Resume error: {ex.Message}");
+            }
         });
     }
-
-    // Метод для доступа к Shell из других классов
-    public AppShell? GetShell() => _shell;
 }
