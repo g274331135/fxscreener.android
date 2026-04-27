@@ -20,6 +20,9 @@ public class DisplayRow
     public Color? UdBackgroundColor { get; set; }
     public string? UdDisplay { get; set; }  // Можно показывать символ ▲ или ▼
 
+    public WsSignal Ws5Signal { get; set; } = new();
+    public WsSignal Ws21Signal { get; set; } = new();
+
     // Флаги для верстки
     public bool IsFirstRow { get; set; }
     public bool IsSecondRow { get; set; }

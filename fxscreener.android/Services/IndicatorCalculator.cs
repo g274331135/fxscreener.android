@@ -121,7 +121,7 @@ public class IndicatorCalculator : IIndicatorCalculator
         //          И закрытие текущего бара ВЫШЕ открытия
         if (currentWpr < prevWpr && prevWpr > -20 && bars[0].IsBullish)
         {
-            return new UdSignal { SignalType = UdSignalType.Bearish };
+            return new UdSignal { SignalType = SignalType.Bearish };
         }
 
         // Медвежий сигнал (светло-красный)
@@ -130,10 +130,70 @@ public class IndicatorCalculator : IIndicatorCalculator
         //          И закрытие текущего бара НИЖЕ открытия
         if (currentWpr > prevWpr && prevWpr < -80 && bars[0].IsBearish)
         {
-            return new UdSignal { SignalType = UdSignalType.Bullish };
+            return new UdSignal { SignalType = SignalType.Bullish };
         }
 
         return null;
+    }
+
+    public WsSignal CalculateWs(List<Bar> bars, int wprPeriod)
+    {
+        var signal = new WsSignal();
+
+        // Нужно минимум 3 бара для паттерна + достаточно истории для расчёта WPR
+        if (bars == null || bars.Count < wprPeriod + 2)
+            return signal;
+
+        try
+        {
+            // Получаем значения WPR для трёх последовательных баров
+            // bar[0] - текущий (последний закрытый)
+            // bar[1] - предыдущий
+            // bar[2] - два бара назад
+            double wpr0 = CalculateWPR(bars, 0, wprPeriod);
+            double wpr1 = CalculateWPR(bars, 1, wprPeriod);
+            double wpr2 = CalculateWPR(bars, 2, wprPeriod);
+
+            // Проверка на МЕДВЕЖИЙ сигнал ▼
+            if (wpr2 > -20 &&                      // Bar(2) выше -20
+                wpr1 < wpr2 &&                      // Bar(1) ниже Bar(2)
+                wpr0 > wpr1 &&                      // Bar(0) выше Bar(1)
+                wpr0 > -80 && wpr1 > -80 && wpr2 > -80) // Все бары не ниже -80
+            {
+                // Дополнительное условие: величина движения
+                double move1 = wpr2 - wpr1;  // Падение от 2 к 1
+                double move2 = wpr0 - wpr1;  // Рост от 1 к 0
+
+                if (move2 < move1)  // Второе движение меньше первого
+                {
+                    signal.Signal = SignalType.Bearish;
+                    return signal;
+                }
+            }
+
+            // Проверка на БЫЧИЙ сигнал ▲
+            if (wpr2 < -80 &&                      // Bar(2) ниже -80
+                wpr1 > wpr2 &&                      // Bar(1) выше Bar(2)
+                wpr0 < wpr1 &&                      // Bar(0) ниже Bar(1)
+                wpr0 < -20 && wpr1 < -20 && wpr2 < -20) // Все бары не выше -20
+            {
+                // Дополнительное условие: величина движения
+                double move1 = wpr1 - wpr2;  // Рост от 2 к 1
+                double move2 = wpr1 - wpr0;  // Падение от 1 к 0
+
+                if (move2 < move1)  // Второе движение меньше первого
+                {
+                    signal.Signal = SignalType.Bullish;
+                    return signal;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error calculating Ws for period {wprPeriod}: {ex.Message}");
+        }
+
+        return signal;
     }
 
     #region Фракталы (F2)

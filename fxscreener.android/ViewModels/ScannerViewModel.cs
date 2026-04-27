@@ -217,6 +217,9 @@ public class ScannerViewModel : BindableObject
                 var result = _indicatorCalculator.CalculateForInstrument(
                     instrument.Symbol, instrument.Period, reversedBars);
 
+                result.Ws5Signal = _indicatorCalculator.CalculateWs(bars, 5);
+                result.Ws21Signal = _indicatorCalculator.CalculateWs(bars, 21);
+
                 allResults.Add(result);
             }
 
@@ -288,7 +291,8 @@ public class ScannerViewModel : BindableObject
                     UdDisplay = ud5Display,
                     IsFirstRow = true,
                     IsSecondRow = false,
-                    PairColorKey = pairColorKey
+                    PairColorKey = pairColorKey,
+                    Ws5Signal = result.Ws5Signal
                 });
 
                 // W21e
@@ -309,7 +313,8 @@ public class ScannerViewModel : BindableObject
                     UdDisplay = ud21Display,
                     IsFirstRow = false,
                     IsSecondRow = true,
-                    PairColorKey = pairColorKey
+                    PairColorKey = pairColorKey,
+                    Ws21Signal = result.Ws21Signal
                 });
 
                 toolIndex++;
@@ -344,8 +349,8 @@ public class ScannerViewModel : BindableObject
 
         return signal.SignalType switch
         {
-            UdSignalType.Bullish => Color.FromArgb("#CCFFCC"),
-            UdSignalType.Bearish => Color.FromArgb("#FFCCCC"),
+            SignalType.Bullish => Color.FromArgb("#CCFFCC"),
+            SignalType.Bearish => Color.FromArgb("#FFCCCC"),
             _ => null
         };
     }
@@ -356,8 +361,8 @@ public class ScannerViewModel : BindableObject
 
         return signal.SignalType switch
         {
-            UdSignalType.Bullish => "▲",
-            UdSignalType.Bearish => "▼",
+            SignalType.Bullish => "▲",
+            SignalType.Bearish => "▼",
             _ => ""
         };
     }

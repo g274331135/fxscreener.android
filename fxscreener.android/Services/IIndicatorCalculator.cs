@@ -40,4 +40,12 @@ public interface IIndicatorCalculator
     /// Получить сигнал WPR для указанного периода
     /// </summary>
     WprSignal? GetWprSignal(List<Bar> bars, int period);
+
+    /// <summary>
+    /// Рассчитывает разворотный паттерн Ws на основе WPR
+    /// </summary>
+    /// <param name="bars">Список баров (индекс 0 = последний закрытый)</param>
+    /// <param name="wprPeriod">Период WPR (5 или 21)</param>
+    /// <returns>Сигнал Ws</returns>
+    WsSignal CalculateWs(List<Bar> bars, int wprPeriod);
 }

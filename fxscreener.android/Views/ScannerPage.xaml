@@ -183,6 +183,21 @@
                                    TextColor="{DynamicResource TextColor}"/>
                         </Frame>
 
+                        <!-- Ws5/Ws21 -->
+                        <Frame Grid.Column="6"
+                               Padding="4,2"
+                               CornerRadius="4"
+                               HasShadow="False"
+                               BackgroundColor="Transparent"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Fill">
+                            <Label Text="{Binding WsDisplay}"
+                                   Style="{StaticResource GridCellLabel}"
+                                   FontAttributes="Bold"
+                                   HorizontalOptions="Center"
+                                   TextColor="{DynamicResource TextColor}"/>
+                        </Frame>
+
                         <!-- Пустые ячейки для второй строки -->
                         <BoxView Grid.Column="0" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
                         <BoxView Grid.Column="1" IsVisible="{Binding IsSecondRow}" BackgroundColor="Transparent"/>
@@ -257,6 +272,17 @@
                                        FontAttributes="Bold"
                                        HorizontalOptions="Center"/>
                             </Frame>
+
+                            <!-- Ws5/Ws21 ячейка -->
+                            <Frame Grid.Column="6"
+                                   Style="{StaticResource UdFrame}"
+                                   BackgroundColor="Transparent">
+                                <Label Text="{Binding Ws5Signal}"
+                                       Style="{StaticResource GridCellLabel}"
+                                       FontAttributes="Bold"
+                                       HorizontalOptions="Center"/>
+                            </Frame>
+                            
                         </Grid>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>

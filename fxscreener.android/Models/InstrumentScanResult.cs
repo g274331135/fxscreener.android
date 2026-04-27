@@ -19,18 +19,14 @@ public class InstrumentScanResult
 
     public UdSignal? UD5 { get; set; }   // Сигнал для UD5
     public UdSignal? UD21 { get; set; }  // Сигнал для UD21
+
+    public WsSignal Ws5Signal { get; set; } = new(); // Сигнал для Ws5
+    public WsSignal Ws21Signal { get; set; } = new(); // Сигнал для Ws21
 }
 
 public class UdSignal
 {
-    public UdSignalType SignalType { get; set; }
-}
-
-public enum UdSignalType
-{
-    None,           // Нет сигнала
-    Bullish,        // Бычий разворот (светло-зелёный)
-    Bearish         // Медвежий разворот (светло-красный)
+    public SignalType SignalType { get; set; }
 }
 
 /// <summary>
@@ -53,4 +49,20 @@ public enum WprSignalType
     StrongAboveMinus5, // Выше -5 (красный)
     BelowMinus80,   // Ниже -80 (бледно-зелёный)
     StrongBelowMinus95 // Ниже -95 (зелёный)
+}
+
+public class WsSignal
+{
+    public SignalType Signal { get; set; } = SignalType.None;
+
+    public string Text => Signal switch
+    {
+        SignalType.Bullish => "▲",
+        SignalType.Bearish => "▼",
+        _ => string.Empty
+    };
+
+    public bool IsBullish => Signal == SignalType.Bullish;
+    public bool IsBearish => Signal == SignalType.Bearish;
+    public bool HasSignal => Signal != SignalType.None;
 }

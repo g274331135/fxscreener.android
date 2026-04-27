@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:fxscreener.android.Converters"
              x:Class="fxscreener.android.App">
     <Application.Resources>
         <ResourceDictionary>
@@ -31,6 +32,9 @@
                     <Color x:Key="GridBorderColor">#404040</Color>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
+            
+            <converters:WsSignalBackgroundConverter x:Key="WsSignalBackgroundConverter"/>
+            <converters:WsSignalToTextConverter x:Key="WsSignalToTextConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
