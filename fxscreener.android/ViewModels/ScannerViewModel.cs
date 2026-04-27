@@ -217,8 +217,10 @@ public class ScannerViewModel : BindableObject
                 var result = _indicatorCalculator.CalculateForInstrument(
                     instrument.Symbol, instrument.Period, reversedBars);
 
-                result.Ws5Signal = _indicatorCalculator.CalculateWs(bars, 5);
-                result.Ws21Signal = _indicatorCalculator.CalculateWs(bars, 21);
+                var reversedWpr5Values = wpr5Values.Reverse<double>().ToList();
+                var reversedWpr21Values = wpr21Values.Reverse<double>().ToList();
+                result.Ws5Signal = _indicatorCalculator.CalculateWs(reversedWpr5Values, 5);
+                result.Ws21Signal = _indicatorCalculator.CalculateWs(reversedWpr21Values, 21);
 
                 allResults.Add(result);
             }
@@ -261,97 +263,113 @@ public class ScannerViewModel : BindableObject
 
     #region Формирование DisplayRows
 
-    private void BuildDisplayRows(List<InstrumentScanResult> allResults)
+    private void BuildDisplayRows(List<InstrumentScanResult> scanResults)
     {
-        MainThread.BeginInvokeOnMainThread(() =>
+        var rows = new List<DisplayRow>();
+
+        // Флаг для чётности (первый инструмент — even, второй — odd и т.д.)
+        int pairIndex = 0;
+
+        foreach (var scanResult in scanResults)
         {
-            var displayRows = new ObservableCollection<DisplayRow>();
-            var toolIndex = 0;
+            // Определяем ключ цвета
+            bool isEven = pairIndex % 2 == 0;
+            string pairColorKey = isEven ? "GridRowEvenColor" : "GridRowOddColor";
 
-            foreach (var result in allResults.OrderBy(r => r.Name))
+            // Цвета для UD
+            var ud5Color = GetUdBackgroundColor(scanResult.UD5);
+            var ud21Color = GetUdBackgroundColor(scanResult.UD21);
+
+            // Цвета для Ws
+            var ws5Color = GetWsBackgroundColor(scanResult.Ws5Signal);
+            var ws21Color = GetWsBackgroundColor(scanResult.Ws21Signal);
+
+            // ========== Строка 1: H1, C5, F2, W5e, UD5, Ws5 ==========
+            var row1 = new DisplayRow
             {
-                // Используем ключи динамических цветов
-                var pairColorKey = (toolIndex % 2 == 0) ? "RowEvenColor" : "RowOddColor";
+                Name = scanResult.Name,
+                Period = scanResult.Period,
+                C5 = scanResult.C5,
+                F2 = scanResult.F2,
+                WprDisplay = scanResult.W5e != null ? scanResult.W5e.BarNumber.ToString() : "",
+                WprTextColor = GetWprColor(scanResult.W5e),
+                UdDisplay = GetUdDisplay(scanResult.UD5),
+                UdBackgroundColor = ud5Color,
+                WsDisplay = scanResult.Ws5Signal.HasSignal ? scanResult.Ws5Signal.Text : "",
+                WsBackgroundColor = ws5Color,
+                IsFirstRow = true,
+                PairColorKey = pairColorKey
+            };
 
-                // W5e
-                var w5eText = result.W5e?.BarNumber.ToString() ?? "";
-                var w5eColor = GetWprTextColor(result.W5e);
-                var ud5Color = GetUdColor(result.UD5);
-                var ud5Display = GetUdDisplay(result.UD5);
+            // ========== Строка 2: W21e, UD21, Ws21 (всё в тех же колонках) ==========
+            var row2 = new DisplayRow
+            {
+                Name = null,
+                Period = null,
+                C5 = null,
+                F2 = null,
+                WprDisplay = scanResult.W21e != null ? scanResult.W21e.BarNumber.ToString() : "",
+                WprTextColor = GetWprColor(scanResult.W21e),
+                UdDisplay = GetUdDisplay(scanResult.UD21),
+                UdBackgroundColor = ud21Color,
+                WsDisplay = scanResult.Ws21Signal.HasSignal ? scanResult.Ws21Signal.Text : "",
+                WsBackgroundColor = ws21Color,
+                IsSecondRow = true,
+                PairColorKey = pairColorKey
+            };
 
-                displayRows.Add(new DisplayRow
-                {
-                    Name = result.Name,
-                    Period = result.Period,
-                    C5 = result.C5,
-                    F2 = result.F2,
-                    WprDisplay = w5eText,
-                    WprTextColor = w5eColor,
-                    UdBackgroundColor = ud5Color,
-                    UdDisplay = ud5Display,
-                    IsFirstRow = true,
-                    IsSecondRow = false,
-                    PairColorKey = pairColorKey,
-                    Ws5Signal = result.Ws5Signal
-                });
+            rows.Add(row1);
+            rows.Add(row2);
+            pairIndex++;
+        }
 
-                // W21e
-                var w21eText = result.W21e?.BarNumber.ToString() ?? "";
-                var w21eColor = GetWprTextColor(result.W21e);
-                var ud21Color = GetUdColor(result.UD21);
-                var ud21Display = GetUdDisplay(result.UD21);
-
-                displayRows.Add(new DisplayRow
-                {
-                    Name = null,
-                    Period = null,
-                    C5 = null,
-                    F2 = null,
-                    WprDisplay = w21eText,
-                    WprTextColor = w21eColor,
-                    UdBackgroundColor = ud21Color,
-                    UdDisplay = ud21Display,
-                    IsFirstRow = false,
-                    IsSecondRow = true,
-                    PairColorKey = pairColorKey,
-                    Ws21Signal = result.Ws21Signal
-                });
-
-                toolIndex++;
-            }
-
-            DisplayRows.Clear();
-            foreach (var row in displayRows)
-                DisplayRows.Add(row);
-
-            LastUpdateTime = DateTime.Now;
-            StatusMessage = $"Обновлено: {allResults.Count} инструментов";
-        });
+        DisplayRows = new ObservableCollection<DisplayRow>(rows);
     }
 
-    private Color? GetWprTextColor(WprSignal? signal)
+    /// <summary>
+    /// Возвращает цвет фона для UD сигнала
+    /// </summary>
+    private Color GetUdBackgroundColor(UdSignal? ud)
     {
-        if (signal == null) return Colors.Gray;
+        if (ud == null) return Colors.Transparent;
 
-        return signal.SignalType switch
+        return ud.SignalType switch
         {
-            WprSignalType.AboveMinus20 => Color.FromArgb("#FFB74D"),   // светло-оранжевый
-            WprSignalType.StrongAboveMinus5 => Color.FromArgb("#FF5252"), // ярко-красный
-            WprSignalType.BelowMinus80 => Color.FromArgb("#81C784"),   // светло-зелёный
-            WprSignalType.StrongBelowMinus95 => Color.FromArgb("#4CAF50"), // зелёный
-            _ => Colors.Gray
+            SignalType.Bullish => Color.FromArgb("#CCFFCC"),   // Светло-зелёный
+            SignalType.Bearish => Color.FromArgb("#FFCCCC"),   // Светло-красный
+            _ => Colors.Transparent
         };
     }
 
-    private Color? GetUdColor(UdSignal? signal)
+    /// <summary>
+    /// Возвращает цвет фона для Ws сигнала
+    /// </summary>
+    private Color GetWsBackgroundColor(WsSignal ws)
     {
-        if (signal == null) return null;
+        if (ws == null || !ws.HasSignal) return Colors.Transparent;
 
-        return signal.SignalType switch
+        return ws.Signal switch
         {
-            SignalType.Bullish => Color.FromArgb("#CCFFCC"),
-            SignalType.Bearish => Color.FromArgb("#FFCCCC"),
-            _ => null
+            SignalType.Bullish => Color.FromArgb("#CCFFCC"),   // Светло-зелёный
+            SignalType.Bearish => Color.FromArgb("#FFCCCC"),   // Светло-красный
+            _ => Colors.Transparent
+        };
+    }
+
+    /// <summary>
+    /// Возвращает цвет текста для WPR
+    /// </summary>
+    private Color GetWprColor(WprSignal? wpr)
+    {
+        if (wpr == null) return Colors.Gray;
+
+        return wpr.SignalType switch
+        {
+            WprSignalType.StrongAboveMinus5 => Color.FromArgb("#FF5252"),     // Ярко-красный
+            WprSignalType.AboveMinus20 => Color.FromArgb("#FFB74D"),         // Светло-оранжевый
+            WprSignalType.StrongBelowMinus95 => Color.FromArgb("#4CAF50"),   // Зелёный
+            WprSignalType.BelowMinus80 => Color.FromArgb("#81C784"),         // Светло-зелёный
+            _ => Colors.Gray
         };
     }
 

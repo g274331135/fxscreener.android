@@ -1,4 +1,5 @@
-﻿namespace fxscreener.android.Models;
+﻿
+namespace fxscreener.android.Models;
 
 /// <summary>
 /// Результат сканирования для одного инструмента (занимает 2 строки в гриде)
@@ -49,20 +50,4 @@ public enum WprSignalType
     StrongAboveMinus5, // Выше -5 (красный)
     BelowMinus80,   // Ниже -80 (бледно-зелёный)
     StrongBelowMinus95 // Ниже -95 (зелёный)
-}
-
-public class WsSignal
-{
-    public SignalType Signal { get; set; } = SignalType.None;
-
-    public string Text => Signal switch
-    {
-        SignalType.Bullish => "▲",
-        SignalType.Bearish => "▼",
-        _ => string.Empty
-    };
-
-    public bool IsBullish => Signal == SignalType.Bullish;
-    public bool IsBearish => Signal == SignalType.Bearish;
-    public bool HasSignal => Signal != SignalType.None;
 }

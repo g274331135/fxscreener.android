@@ -18,19 +18,19 @@ public class DisplayRow
 
     // Для UD5/UD21
     public Color? UdBackgroundColor { get; set; }
-    public string? UdDisplay { get; set; }  // Можно показывать символ ▲ или ▼
+    public string? UdDisplay { get; set; }  // Символ ▲ или ▼
 
-    public WsSignal Ws5Signal { get; set; } = new();
-    public WsSignal Ws21Signal { get; set; } = new();
+    // Для Ws5/Ws21
+    public Color? WsBackgroundColor { get; set; }
+    public string? WsDisplay { get; set; }  // Символ ▲ или ▼
 
-    // Флаги для верстки
+    // Флаги для вёрстки
     public bool IsFirstRow { get; set; }
     public bool IsSecondRow { get; set; }
 
     // Цвет для пары строк (инструмента)
-    // Вместо фиксированного цвета используем ключ ресурса
     public string PairColorKey { get; set; } = "RowEvenColor";
-    // Возвращает цвет из ресурсов приложения в зависимости от темы
+
     public Color PairColor
     {
         get
